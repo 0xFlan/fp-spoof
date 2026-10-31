@@ -1,13 +1,15 @@
 """fp-spoof CLI.
 
-    python -m api.run mint  --platform windows --browser chrome --seed 111 --save
-    python -m api.run probe --seed 111 --platform windows
-    python -m api.run list  [--pool default]
-    python -m api.run audit --n 200 --platform windows
-    python -m api.run live  --seed 111 --url https://example.com [--headed] [--fpjs]
+python -m api.run mint --platform windows --browser chrome --seed 111 --save
+python -m api.run probe --seed 111 --platform windows
+python -m api.run list [--pool default]
+python -m api.run use --name profile-chrome-windows-111 [--pool default]
+python -m api.run audit --n 200 --platform windows
+python -m api.run live --seed 111 --url https://example.com [--headed] [--fpjs]
 
 Exit codes: 0 accepted, 1 rejected, 2 usage error.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -66,17 +68,34 @@ def cmd_list(args):
     return 0
 
 
+def cmd_use(args):
+    """Record that a stored profile was loaded.
+
+    The only writer of the hits column. A missing name is a rejection rather
+    than a silent no-op, so a caller cannot believe it reused a profile that
+    was never saved.
+    """
+    updated = store.record_hit(args.name, args.pool)
+    if not updated:
+        print(
+            f"no profile named {args.name!r} in pool {args.pool!r}",
+            file=sys.stderr,
+        )
+        return 1
+    row = store.get(args.name, args.pool)
+    print(json.dumps({"name": row[0], "pool": row[1], "hits": row[7]}, indent=2))
+    return 0
+
+
 def cmd_audit(args):
     allowed = tables.ALLOWED[args.platform]
     profiles = [
         mint(args.seed + offset, allowed[offset % len(allowed)], args.platform, args.pool)
         for offset in range(args.n)
     ]
-
     rejected = [profile.name for profile in profiles if reconcile(profile)]
     report = entropy.population_report(profiles, truth.distributions(args.platform))
     ok, failures = entropy.passes(report)
-
     print(json.dumps({
         "platform": args.platform,
         "n": len(profiles),
@@ -89,7 +108,6 @@ def cmd_audit(args):
         "passes": ok,
         "failures": failures,
     }, indent=2, default=str))
-
     return 0 if ok and not rejected else 1
 
 
@@ -100,17 +118,15 @@ def cmd_live(args):
 
     profile = mint(args.seed, _resolve_browser(args.platform, args.browser),
                    args.platform, args.pool)
-
     with session(profile, headless=not args.headed, root=args.profile_dir) as context:
         page = context.new_page()
         page.goto(args.url, wait_until="domcontentloaded")
         observed = page.evaluate(PROBE)
-
         detector = None
         if args.fpjs:
             from verify import fingerprintjs
-            detector = fingerprintjs.read(page)
 
+            detector = fingerprintjs.read(page)
     problems = diff(profile, observed)
     print(json.dumps({
         "profile": profile.name,
@@ -139,12 +155,9 @@ def build_parser():
     mint_cmd = add("mint", cmd_mint)
     mint_cmd.add_argument("--name", default=None)
     mint_cmd.add_argument("--save", action="store_true")
-
     add("probe", cmd_probe)
-
     audit_cmd = add("audit", cmd_audit)
     audit_cmd.add_argument("--n", type=int, default=200)
-
     live_cmd = add("live", cmd_live)
     live_cmd.add_argument("--url", default="about:blank")
     live_cmd.add_argument("--headed", action="store_true")
@@ -154,6 +167,12 @@ def build_parser():
     listing = sub.add_parser("list")
     listing.add_argument("--pool", default=None)
     listing.set_defaults(handler=cmd_list)
+
+    using = sub.add_parser("use")
+    using.add_argument("--name", required=True)
+    using.add_argument("--pool", default=DEFAULT_POOL)
+    using.set_defaults(handler=cmd_use)
+
     return parser
 
 
