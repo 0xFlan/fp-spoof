@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fp-spoof"
+version = "0.1.0"
+description = "Mint, render and audit internally consistent browser fingerprints."
+readme = "README.md"
+requires-python = ">=3.10"
+
+[project.scripts]
+fp-spoof = "api.run:main"
+
+[tool.setuptools]
+py-modules = ["constants"]
+packages = ["api", "fpr", "fix", "models", "render", "synth", "verify"]

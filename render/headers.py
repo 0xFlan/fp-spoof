@@ -2,17 +2,21 @@
 
 The UA and the client hints must tell the SAME story: a Chrome UA with no
 sec-ch-ua, or a sec-ch-ua-platform of "Windows" behind an Apple GPU, is
-trivial to spot. Both are derived from the profile here.
+trivial to spot. Both are derived from the profile here, and whether the
+engine sends hints at all comes from the capability table rather than from
+an assumption about what Chromium does.
 """
+
 from __future__ import annotations
 
 import re
+
+from synth import tables
 
 PLATFORM_LABEL = {
     "windows": '"Windows"',
     "mac": '"macOS"',
     "linux": '"Linux"',
-    "ios": '"iOS"',
 }
 
 # Chromium's GREASE brand. The spelling is "Not_A Brand" with an underscore;
@@ -49,15 +53,14 @@ def brands(profile, major: int) -> list:
 
 
 def headers(profile) -> dict:
-    ua = profile.ua
     out = {
-        "user-agent": ua,
+        "user-agent": profile.ua,
         "accept-language": accept_language(profile.languagesZ),
     }
-    if profile.browser not in ("chrome", "edge"):
+    if not tables.BROWSER_CAPS.get(profile.browser, {}).get("clientHints"):
         return out
-    major = major_version(ua)
+    major = major_version(profile.ua)
     out["sec-ch-ua"] = ", ".join(brands(profile, major))
-    out["sec-ch-ua-mobile"] = "?1" if profile.platform == "ios" else "?0"
+    out["sec-ch-ua-mobile"] = "?0"
     out["sec-ch-ua-platform"] = PLATFORM_LABEL[profile.platform]
     return out

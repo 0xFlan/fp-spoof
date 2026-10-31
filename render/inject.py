@@ -4,12 +4,18 @@ Two requirements pull against each other: the values must be IDENTICAL on
 every visit for one profile (or the fingerprint moves), and they must DIFFER
 between profiles (or every profile collapses into one device). Every value
 here is derived from the profile alone, so both hold.
+
+Properties the engine does not expose are not defined at all. Defining one
+is a contradiction the verifier catches, and the fix belongs here rather
+than in a special case per browser.
 """
+
 from __future__ import annotations
 
 import json
 
 from render.timezones import timezone_for
+from synth import tables
 
 PROFILE_TOKEN = "__FP_SPOOF_PROFILE__"
 
@@ -39,7 +45,7 @@ def payload(profile) -> dict:
         "timezone": timezone_for(profile),
         "browser": profile.browser,
         "platform": profile.platform,
-        "mobile": profile.platform == "ios",
+        "caps": dict(tables.BROWSER_CAPS.get(profile.browser, {})),
     }
 
 
@@ -56,7 +62,9 @@ INIT_SCRIPT = r"""
   };
 
   define(navigator, 'hardwareConcurrency', P.cores);
-  define(navigator, 'deviceMemory', P.memory);
+  if (P.caps.deviceMemory) {
+    define(navigator, 'deviceMemory', P.memory);
+  }
   define(navigator, 'platform', P.platformKey);
   define(navigator, 'language', P.languages[0]);
   define(navigator, 'languages', P.languages);
