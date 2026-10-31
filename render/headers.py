@@ -15,6 +15,10 @@ PLATFORM_LABEL = {
     "ios": '"iOS"',
 }
 
+# Chromium's GREASE brand. The spelling is "Not_A Brand" with an underscore;
+# a hyphen here is a value no real browser produces.
+GREASE = '"Not_A Brand";v="24"'
+
 _MAJOR = re.compile(r"(?:Chrome|Edg)/(\d+)")
 
 
@@ -34,26 +38,26 @@ def accept_language(languages) -> str:
     return ",".join(parts)
 
 
+def brands(profile, major: int) -> list:
+    chromium = f'"Chromium";v="{major}"'
+    if profile.browser == "edge":
+        # Edge advertises itself and Chromium, and never claims to be Chrome.
+        return [GREASE, f'"Microsoft Edge";v="{major}"', chromium]
+    if profile.browser == "chrome":
+        return [GREASE, chromium, f'"Google Chrome";v="{major}"']
+    return []
+
+
 def headers(profile) -> dict:
     ua = profile.ua
     out = {
         "user-agent": ua,
         "accept-language": accept_language(profile.languagesZ),
     }
-
     if profile.browser not in ("chrome", "edge"):
         return out
-
     major = major_version(ua)
-    brands = [
-        f'"Chromium";v="{major}"',
-        f'"Google Chrome";v="{major}"',
-        '"Not-A.Brand";v="24"',
-    ]
-    if profile.browser == "edge":
-        brands.insert(1, f'"Microsoft Edge";v="{major}"')
-
-    out["sec-ch-ua"] = ", ".join(brands)
+    out["sec-ch-ua"] = ", ".join(brands(profile, major))
     out["sec-ch-ua-mobile"] = "?1" if profile.platform == "ios" else "?0"
     out["sec-ch-ua-platform"] = PLATFORM_LABEL[profile.platform]
     return out
