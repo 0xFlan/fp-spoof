@@ -53,11 +53,15 @@ ZONES = {
     "ios": [10, 11],
 }
 
+# The exact strings navigator.platform reports. Not CPU names: Chromium says
+# Win32 / MacIntel / Linux x86_64, and Safari on iOS says iPhone. The renderer
+# writes this value into navigator.platform and the probe reads it back, so
+# anything else here would fail every live run.
 PLATFORM_KEY = {
-    "windows": "amd64",
-    "mac": "x86_64",
-    "linux": "x86_64",
-    "ios": "arm64",
+    "windows": "Win32",
+    "mac": "MacIntel",
+    "linux": "Linux x86_64",
+    "ios": "iPhone",
 }
 
 ALLOWED = {

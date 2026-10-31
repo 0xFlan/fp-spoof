@@ -16,6 +16,10 @@ ALL_COMBOS = [
 
 FORBIDDEN_IN_GENERATOR = ("verify.truth", "TRUTH_PATH")
 
+# What navigator.platform actually returns, per engine. Anything outside this
+# set is a value no browser emits, so the renderer would leak immediately.
+REAL_NAVIGATOR_PLATFORM = {"Win32", "MacIntel", "Linux x86_64", "iPhone"}
+
 
 def test_mint_is_deterministic():
     assert mint(111) == mint(111)
@@ -33,6 +37,10 @@ def test_every_combo_mints_and_reconciles():
     for platform, browser in ALL_COMBOS:
         profile = mint(7, browser, platform)
         assert reconcile(profile) == [], (platform, browser, reconcile(profile))
+
+
+def test_platform_key_uses_the_string_a_browser_actually_reports():
+    assert set(tables.PLATFORM_KEY.values()) <= REAL_NAVIGATOR_PLATFORM
 
 
 @pytest.mark.parametrize("platform,browser", ALL_COMBOS)

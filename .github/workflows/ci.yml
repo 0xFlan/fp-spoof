@@ -29,11 +29,22 @@ jobs:
       - name: Tests
         run: python -m pytest tests -q
 
+      # `run` uses bash -e, so a deliberately-failing command must have its
+      # exit code captured with set +e first; otherwise the shell aborts before
+      # the assertion can look at $?.
       - name: CLI wiring
         run: |
+          set -euo pipefail
           python -m api.run --help > /dev/null
           python -m api.run live --help > /dev/null
-          python -m api.run mint --platform ios --browser chrome > /dev/null; test $? -eq 2
+          set +e
+          python -m api.run mint --platform ios --browser chrome > /dev/null 2>&1
+          code=$?
+          set -e
+          if [ "$code" -ne 2 ]; then
+            echo "expected exit 2 for an impossible browser/platform pair, got $code"
+            exit 1
+          fi
 
       # audit is expected to report divergences until the generation tables and
       # the curated truth are reconciled on purpose; the gate is that it runs.
