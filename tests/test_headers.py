@@ -1,5 +1,7 @@
 """Client hints must tell the same story as the user agent."""
+
 from render.headers import GREASE, headers, major_version
+from synth import tables
 from synth.mint import mint
 
 
@@ -27,9 +29,15 @@ def test_grease_uses_the_spelling_chromium_emits():
     assert "Not-A.Brand" not in sec_ch_ua
 
 
-def test_safari_sends_no_client_hints():
-    hints = [key for key in headers(mint(111, "safari", "mac")) if key.startswith("sec-ch-ua")]
-    assert hints == []
+def test_every_renderable_browser_sends_client_hints():
+    for platform, browsers in tables.ALLOWED.items():
+        for browser in browsers:
+            hints = [
+                key
+                for key in headers(mint(111, browser, platform))
+                if key.startswith("sec-ch-ua")
+            ]
+            assert hints, (platform, browser)
 
 
 def test_platform_label_matches_the_minted_platform():

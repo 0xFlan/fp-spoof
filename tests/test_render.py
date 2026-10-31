@@ -32,11 +32,15 @@ def test_payload_carries_the_engine_capabilities():
     assert payload(profile)["caps"] == tables.BROWSER_CAPS["edge"]
 
 
-def test_device_memory_is_only_defined_when_the_engine_has_it(monkeypatch):
-    profile = mint(111, "chrome", "windows")
-    assert "define(navigator, 'deviceMemory'" in init_script(profile)
+def test_device_memory_define_is_guarded_by_the_capability(monkeypatch):
+    # The definition is a fixed line of the script; what varies is the runtime
+    # guard around it and the capability carried in the payload.
+    script = init_script(mint(111, "chrome", "windows"))
+    assert "if (P.caps.deviceMemory) {" in script
+    assert "define(navigator, 'deviceMemory', P.memory);" in script
+
     monkeypatch.setitem(tables.BROWSER_CAPS["chrome"], "deviceMemory", False)
-    assert "define(navigator, 'deviceMemory'" not in init_script(profile)
+    assert payload(mint(111, "chrome", "windows"))["caps"]["deviceMemory"] is False
 
 
 def test_chromium_sends_client_hints():
