@@ -15,55 +15,50 @@ jobs:
         python-version: ["3.10", "3.12"]
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-
+      # Installed as a package, not only imported from the checkout: the
+      # entry point is part of what ships.
       - name: Install
-        run: pip install pytest
-
+        run: pip install -e . pytest
       - name: Syntax check every module
         run: python -m compileall -q api fpr fix models render synth tests verify constants.py
-
       - name: Tests
         run: python -m pytest tests -q
-
       # `run` uses bash -e, so a deliberately-failing command must have its
-      # exit code captured with set +e first; otherwise the shell aborts before
-      # the assertion can look at $?.
+      # exit code captured with set +e first; otherwise the shell aborts
+      # before the assertion can read $?.
       - name: CLI wiring
         run: |
           set -euo pipefail
-          python -m api.run --help > /dev/null
+          fp-spoof --help > /dev/null
           python -m api.run live --help > /dev/null
           set +e
-          python -m api.run mint --platform ios --browser chrome > /dev/null 2>&1
+          fp-spoof mint --platform linux --browser edge > /dev/null 2>&1
           code=$?
           set -e
           if [ "$code" -ne 2 ]; then
             echo "expected exit 2 for an impossible browser/platform pair, got $code"
             exit 1
           fi
-
-      # audit is expected to report divergences until the generation tables and
-      # the curated truth are reconciled on purpose; the gate is that it runs.
-      - name: CLI smoke test
+      # The audit is a gate. It used to run with `|| true`, which meant a
+      # population that diverged from the truth set could never fail CI.
+      - name: Population audit on every platform
         run: |
-          python -m api.run probe --seed 111 --platform windows
-          python -m api.run audit --n 50 --platform mac || true
+          set -euo pipefail
+          for platform in windows mac linux; do
+            echo "== $platform"
+            fp-spoof audit --n 100 --platform "$platform"
+          done
 
-  # The only job that exercises render/ at all. Everything above runs against
-  # pure functions; this one starts a real engine and reads it back.
   browser:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
       # Quiet install: the apt and browser-download output runs to hundreds of
       # lines and buries the assertions below, which are what this job is for.
       - name: Install
@@ -74,7 +69,6 @@ jobs:
             tail -n 50 /tmp/install.log
             exit 1
           }
-
       # A skipped test exits 0, so without this guard the job can go green
       # having started no browser at all.
       - name: Browser tests
@@ -89,14 +83,11 @@ jobs:
           fi
           grep -qE "[0-9]+ passed" /tmp/pytest.txt \
             || { echo "::error::no tests passed"; exit 1; }
-
-      # Exits non-zero if any probed field disagrees with the profile, so this
-      # step is the end-to-end assertion; the JSON is here to be read.
+      # Exits non-zero if any probed field disagrees with the profile.
       - name: Live probe end to end
         run: |
           python -m api.run live --seed 111 --platform windows --url about:blank
-
-      # The real library, from its CDN. Each run reuses the same persistent
+      # The real library, from its CDN. Each seed reuses its own persistent
       # profile directory, so the two visits are the same device returning.
       - name: FingerprintJS stability
         run: |
@@ -119,7 +110,26 @@ jobs:
           assert a["visitorId"] == b["visitorId"], "visitorId changed between visits"
           print("visitorId stable across visits")
           PY
+      # Stability alone would be satisfied by a renderer that ignores the
+      # profile entirely, so a second seed must look like a different device.
+      - name: FingerprintJS distinctness across seeds
+        run: |
+          set -o pipefail
+          python -m api.run live --seed 222 --platform windows \
+            --url https://example.com --fpjs > /tmp/fp3.json
+          python - <<'PY'
+          import json
+          import pathlib
 
+          first = json.loads(pathlib.Path("/tmp/fp1.json").read_text())
+          third = json.loads(pathlib.Path("/tmp/fp3.json").read_text())
+          a, c = first["fingerprintjs"], third["fingerprintjs"]
+          print("seed 111:", a["visitorId"])
+          print("seed 222:", c["visitorId"])
+          assert third["problems"] == [], third["problems"]
+          assert a["visitorId"] != c["visitorId"], "two seeds rendered the same device"
+          print("visitorId differs between seeds")
+          PY
       - name: Upload profile artifacts
         if: failure()
         uses: actions/upload-artifact@v4
