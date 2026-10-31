@@ -96,6 +96,30 @@ jobs:
         run: |
           python -m api.run live --seed 111 --platform windows --url about:blank
 
+      # The real library, from its CDN. Each run reuses the same persistent
+      # profile directory, so the two visits are the same device returning.
+      - name: FingerprintJS stability
+        run: |
+          set -o pipefail
+          python -m api.run live --seed 111 --platform windows \
+            --url https://example.com --fpjs > /tmp/fp1.json
+          python -m api.run live --seed 111 --platform windows \
+            --url https://example.com --fpjs > /tmp/fp2.json
+          python - <<'PY'
+          import json
+          import pathlib
+
+          first = json.loads(pathlib.Path("/tmp/fp1.json").read_text())
+          second = json.loads(pathlib.Path("/tmp/fp2.json").read_text())
+          a, b = first["fingerprintjs"], second["fingerprintjs"]
+          print("visit 1:", a["visitorId"], "components:", len(a["components"]))
+          print("visit 2:", b["visitorId"])
+          assert first["problems"] == [], first["problems"]
+          assert a["stableWithinSession"], "visitorId drifted within one load"
+          assert a["visitorId"] == b["visitorId"], "visitorId changed between visits"
+          print("visitorId stable across visits")
+          PY
+
       - name: Upload profile artifacts
         if: failure()
         uses: actions/upload-artifact@v4
