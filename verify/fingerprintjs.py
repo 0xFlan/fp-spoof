@@ -3,6 +3,11 @@
 This is the real library, loaded from its CDN, not a local imitation. It needs
 a browser and network access, so it only runs from the `live --fpjs` path.
 
+v4 ships as an ES module: the documented usage is
+`import('https://openfpcdn.io/fingerprintjs/v4')`, which returns the module
+namespace. It does not install a window global, so loading it with a classic
+<script> tag succeeds and leaves window.FingerprintJS undefined.
+
 What it demonstrates: two loads in the same profile yield the same visitorId,
 and two different profiles yield different ones. A stable ID across profiles
 means the profiles are not actually distinguishable; an unstable one means the
@@ -13,16 +18,14 @@ from __future__ import annotations
 CDN = "https://openfpcdn.io/fingerprintjs/v4"
 
 READ = r"""async (src) => {
-  if (!window.FingerprintJS) {
-    await new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = src;
-      script.onload = resolve;
-      script.onerror = () => reject(new Error('failed to load ' + src));
-      document.head.appendChild(script);
-    });
+  let lib = window.FingerprintJS;
+  if (!lib) {
+    lib = await import(src);
   }
-  const fp = await window.FingerprintJS.load();
+  if (!lib || typeof lib.load !== 'function') {
+    throw new Error('FingerprintJS module exposes no load()');
+  }
+  const fp = await lib.load();
   const first = await fp.get();
   const second = await fp.get();
   return {
