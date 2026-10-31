@@ -52,3 +52,36 @@ jobs:
         run: |
           python -m api.run probe --seed 111 --platform windows
           python -m api.run audit --n 50 --platform mac || true
+
+  # The only job that exercises render/ at all. Everything above runs against
+  # pure functions; this one starts a real engine and reads it back.
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: |
+          pip install pytest playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Browser tests
+        env:
+          FP_SPOOF_BROWSER: "1"
+        run: python -m pytest tests/test_browser.py -q
+
+      - name: Live probe end to end
+        run: |
+          python -m api.run live --seed 111 --platform windows --url about:blank
+
+      - name: Upload profile artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profiles
+          path: var/profiles
+          if-no-files-found: ignore
