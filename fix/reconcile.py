@@ -7,7 +7,11 @@ profile, because it read p["touchPoints"] that the generator never emitted.
 
 Accepts either a Profile or a plain mapping, so stored payloads can be
 re-validated without reconstructing the dataclass.
+
+Membership checks prove each value legal on its own. The relationship checks
+at the bottom prove the combination is a machine someone could own.
 """
+
 from __future__ import annotations
 
 from collections.abc import Mapping
@@ -21,9 +25,16 @@ def _get(record, key, default=None):
     return getattr(record, key, default)
 
 
+def _num(record, key):
+    """Numeric value of a field, or None when absent or not a number."""
+    value = _get(record, key)
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    return value
+
+
 def reconcile(record) -> list:
     errors = []
-
     platform = _get(record, "platform")
     browser = _get(record, "browser")
     ua = _get(record, "ua", "") or ""
@@ -46,13 +57,14 @@ def reconcile(record) -> list:
     # Exclusivity: a UA must not carry a token for a browser it is not.
     if browser != "edge" and "Edg/" in ua:
         errors.append("ua-edge-token")
-    if browser not in ("chrome", "edge") and "Chrome/" in ua:
-        errors.append("ua-chrome-token")
-    if platform == "ios" and "Mobile/" not in ua:
-        errors.append("ua-mobile")
 
-    if _get(record, "deviceMemory") not in tables.MEMORY[platform]:
-        errors.append("deviceMemory")
+    caps = tables.BROWSER_CAPS.get(browser, {})
+    if caps.get("deviceMemory"):
+        if _get(record, "deviceMemory") not in tables.MEMORY[platform]:
+            errors.append("deviceMemory")
+    elif _get(record, "deviceMemory") is not None:
+        errors.append("deviceMemory-unsupported")
+
     if _get(record, "hardwareConcurrency") not in tables.CORES[platform]:
         errors.append("hardwareConcurrency")
     if _get(record, "pixelRatio") not in tables.DPR[platform]:
@@ -63,19 +75,39 @@ def reconcile(record) -> list:
         errors.append("zone")
     if _get(record, "platformKey") != tables.PLATFORM_KEY[platform]:
         errors.append("platformKey")
-
-    if bool(_get(record, "sensors")) != (platform == "ios"):
+    if bool(_get(record, "sensors")):
         errors.append("sensors")
     if _get(record, "touchPoints") not in tables.TOUCH[platform]:
         errors.append("touchPoints")
 
-    plugins = _get(record, "plugins")
-    if browser == "safari" and plugins:
-        errors.append("safari-plugins")
-    if browser != "safari" and not plugins:
-        errors.append("missing-plugins")
+    # Chromium's plugin list is a property of the browser, not of the machine
+    # or the seed, so an inexact set is a rendering bug even when it is a
+    # plausible-looking set.
+    expected_plugins = tables.PLUGINS_BY_BROWSER.get(browser)
+    if expected_plugins is None:
+        errors.append(f"plugins-unknown:{browser!r}")
+    elif sorted(_get(record, "plugins") or ()) != sorted(expected_plugins):
+        errors.append("plugin-set")
 
-    if not _get(record, "wglRenderer") or not _get(record, "wgpuAdapter"):
+    dpr = _num(record, "pixelRatio")
+    screen_x = _num(record, "screenX")
+    if dpr is not None and screen_x is not None and dpr >= 2 and screen_x < 1440:
+        errors.append("screen-vs-dpr")
+
+    cores = _num(record, "hardwareConcurrency")
+    memory = _num(record, "deviceMemory")
+    if cores is not None and memory is not None and cores >= 12 and memory <= 4:
+        errors.append("cores-vs-memory")
+
+    languages = _get(record, "languagesZ") or ()
+    language = languages[0] if languages else None
+    allowed_zones = tables.LANGUAGE_ZONES.get(language)
+    if allowed_zones is None:
+        errors.append(f"language-unknown:{language!r}")
+    elif _get(record, "zone") not in allowed_zones:
+        errors.append(f"zone-vs-language:{language}@{_get(record, 'zone')}")
+
+    if not _get(record, "wglVendor") or not _get(record, "wgpuAdapter"):
         errors.append("gpu-strings")
 
     return errors

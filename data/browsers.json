@@ -1,100 +1,16 @@
 {
-  "browsers": {
-    "chrome": {
-      "wu": {
-        "windows": "5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "linux": "5.0 (X11; Linux x86_64) AppleWebKit/537.36",
-        "mac": "5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-        "ios": "5.0 (iPhone; iOS 17_0 like Mac OS X) AppleWebKit/605.1.15"
-      },
-      "platforms": ["windows", "linux", "mac"],
-      "sensors": false,
-      "touchPoints": 14,
-      "plugins": ["PDF Viewer", "Java"],
-      "pdfViewer": {
-        "windows": "Microsoft Edge",
-        "linux": "Chrome PDF Plugin",
-        "mac": "Chrome PDF Plugin"
-      },
-      "java": {
-        "windows": "11.0.0",
-        "linux": "11.0.2",
-        "mac": "11.0.2"
-      }
-    },
-    "safari": {
-      "wu": {
-        "ios": "604.1.26",
-        "mac": "605.1.15",
-        "windows": "605.1.15"
-      },
-      "platforms": ["ios", "mac", "windows"],
-      "sensors": true,
-      "touchPoints": 7,
-      "plugins": ["none"],
-      "pdfViewer": {
-        "ios": "Chrome PDF Viewer",
-        "mac": "Chrome PDF Viewer",
-        "windows": "Chrome PDF Viewer"
-      },
-      "java": {
-        "ios": "",
-        "mac": "",
-        "windows": ""
-      }
-    },
-    "edge": {
-      "wu": {
-        "windows": "183.0.3984.51",
-        "linux": "120.0.0.0",
-        "mac": "120.0.0.0"
-      },
-      "platforms": ["windows", "linux", "mac"],
-      "sensors": false,
-      "touchPoints": 9,
-      "plugins": ["PDF Viewer", "Java"],
-      "pdfViewer": {
-        "windows": "Microsoft Edge",
-        "mac": "Microsoft Edge",
-        "linux": "Microsoft Edge"
-      },
-      "java": {
-        "windows": "11.0.0",
-        "mac": "11.0.2",
-        "linux": "11.0.2"
-      }
-    }
-  },
   "os": {
     "windows": {
-      "zone": [9, 10, 11],
-      "concord": 0,
-      "zTwo": [10, 11, 12],
-      "zThree": [25, 30, 40],
-      "zFour": [30, 50, 90],
-      "core": [64, 96, 128],
-      "conc": [4, 8, 12],
-      "mem": [4, 8]
+      "mem": [4, 8],
+      "conc": [4, 6, 8, 12, 16]
     },
     "mac": {
-      "zOne": [9, 10, 11],
-      "concord": 0,
-      "zTwo": [10, 11, 12],
-      "zThree": [25, 30, 40],
-      "zFour": [30, 50, 90],
-      "core": [64, 96, 128],
-      "conc": [4, 8, 8, 10, 12],
-      "mem": [4, 8]
+      "mem": [4, 8],
+      "conc": [4, 8, 8, 10, 12]
     },
-    "ios": {
-      "zOne": [10, 16],
-      "concord": 0,
-      "zTwo": [10, 16],
-      "zThree": [16, 24],
-      "zFour": [24, 64],
-      "core": [16, 24],
-      "conc": [0],
-      "mem": [4, 8]
+    "linux": {
+      "mem": [4, 8],
+      "conc": [2, 4, 8, 12, 16]
     }
   }
 }
