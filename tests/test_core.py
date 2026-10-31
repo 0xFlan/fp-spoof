@@ -20,6 +20,10 @@ FORBIDDEN_IN_GENERATOR = ("verify.truth", "TRUTH_PATH")
 # set is a value no browser emits, so the renderer would leak immediately.
 REAL_NAVIGATOR_PLATFORM = {"Win32", "MacIntel", "Linux x86_64", "iPhone"}
 
+# Chrome bucketed it to a power of two and clamps at 8 GiB, so nothing above 8
+# can appear in a real browser.
+CHROME_DEVICE_MEMORY = {0.25, 0.5, 1, 2, 4, 8}
+
 
 def test_mint_is_deterministic():
     assert mint(111) == mint(111)
@@ -41,6 +45,19 @@ def test_every_combo_mints_and_reconciles():
 
 def test_platform_key_uses_the_string_a_browser_actually_reports():
     assert set(tables.PLATFORM_KEY.values()) <= REAL_NAVIGATOR_PLATFORM
+
+
+def test_generator_emits_only_device_memory_chrome_can_report():
+    for platform, values in tables.MEMORY.items():
+        assert set(values) <= CHROME_DEVICE_MEMORY, platform
+
+
+def test_truth_holds_only_device_memory_chrome_can_report():
+    from verify import truth
+
+    for platform in ("windows", "mac", "ios"):
+        distribution = truth.distributions(platform).get("deviceMemory", {})
+        assert set(distribution) <= CHROME_DEVICE_MEMORY, platform
 
 
 @pytest.mark.parametrize("platform,browser", ALL_COMBOS)
@@ -102,6 +119,7 @@ def test_population_report_covers_default_fields():
 
 def test_low_entropy_fields_are_not_gated_on_bits():
     report = {
+        "deviceMemory": {"n": 50, "bits": 1.0},
         "pixelRatio": {"n": 50, "bits": 1.0},
         "zone": {"n": 50, "bits": 0.995},
     }
@@ -109,7 +127,7 @@ def test_low_entropy_fields_are_not_gated_on_bits():
 
 
 def test_high_entropy_fields_are_still_gated():
-    ok, failures = entropy.passes({"deviceMemory": {"n": 50, "bits": 0.5}})
+    ok, failures = entropy.passes({"hardwareConcurrency": {"n": 50, "bits": 0.5}})
     assert not ok
     assert "bits" in failures[0]
 

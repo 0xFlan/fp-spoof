@@ -18,16 +18,21 @@ SCREENS = {
     "ios": [(390, 844), (393, 852), (430, 932), (428, 926), (375, 812), (412, 915)],
 }
 
+# navigator.deviceMemory is bucketed to a power of two and clamped at 8, so
+# 4 and 8 are the only values a desktop ever reports. Anything larger is a
+# value no browser emits, which is why it is not offered here.
 MEMORY = {
-    "windows": [4, 8, 16, 32],
-    "mac": [8, 16, 32, 64],
-    "linux": [4, 8, 16, 32],
-    "ios": [4, 6, 8],
+    "windows": [4, 8],
+    "mac": [4, 8],
+    "linux": [4, 8],
+    "ios": [4, 8],
 }
 
+# Apple shipped 4-core Intel machines and 8/10/12-core Apple silicon, so all
+# four are values that occur in the wild.
 CORES = {
     "windows": [4, 6, 8, 12, 16],
-    "mac": [8, 10, 12],
+    "mac": [4, 8, 10, 12],
     "linux": [2, 4, 8, 12, 16],
     "ios": [4, 6],
 }

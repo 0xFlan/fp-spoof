@@ -26,6 +26,11 @@ DEFAULT_FIELDS = ("deviceMemory", "hardwareConcurrency", "pixelRatio", "zone")
 LOW_ENTROPY_FIELDS = {
     "pixelRatio": "bimodal by nature: displays are 1x or 2x, so one bit is the ceiling",
     "zone": "a handful of plausible UTC offsets; this field corroborates, it does not distinguish",
+    "deviceMemory": (
+        "Chrome clamps it to 8 GiB and rounds to a power of two, so a desktop "
+        "population has two legal values and one bit; asking for more forced "
+        "the tables to emit 16, 32 and 64, none of which a browser reports"
+    ),
 }
 
 
@@ -53,12 +58,10 @@ def kl_bits(sample, reference, alpha: float = 0.5) -> float:
     sample = list(sample)
     if not sample:
         return float("inf")
-
     counts = Counter(sample)
     n = len(sample)
     support = sorted(set(counts) | set(reference), key=str)
     k = len(support)
-
     total = 0.0
     for value in support:
         if alpha:
@@ -67,10 +70,10 @@ def kl_bits(sample, reference, alpha: float = 0.5) -> float:
         else:
             p = counts.get(value, 0) / n
             q = reference.get(value, 0.0)
-            if q == 0.0:
-                return float("inf")
-            if p == 0.0:
-                continue
+        if q == 0.0:
+            return float("inf")
+        if p == 0.0:
+            continue
         total += p * math.log2(p / q)
     return total
 
@@ -94,9 +97,9 @@ def population_report(profiles, truth=None, fields=DEFAULT_FIELDS) -> dict:
         reference = truth.get(field)
         if reference:
             entry["kl"] = round(kl_bits(values, reference), 3)
-            gaps = support_gaps(values, reference)
-            if gaps["unknown"] or gaps["missing"]:
-                entry["support"] = gaps
+        gaps = support_gaps(values, reference)
+        if gaps["unknown"] or gaps["missing"]:
+            entry["support"] = gaps
         report[field] = entry
     return report
 
