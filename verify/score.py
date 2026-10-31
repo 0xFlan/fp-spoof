@@ -1,12 +1,29 @@
-MIN_BITS = 10.0
+"""Acceptance gate for a single profile.
 
-def score(p, hard=0.75):
-    from verify.fingerprintjs_vX import fingerprint
-    from random.fingerprint import entropy_field, getplat
-    from fix.reconcile import is_valid
-    if not is_valid(p):
-        return False, {"reason": ["constrained-reject"]}
-    fp = fingerprint(p)
-    if fp < hard:
-        return False, {"reason": ["fpjs"]}
-    return True, {"fpjs": fp}
+Returns (ok, result) where result always carries the same keys, so callers
+never have to branch on shape.
+"""
+from __future__ import annotations
+
+from constants import MIN_CONSISTENCY
+from fix.reconcile import reconcile
+from verify.fingerprintjs_vX import consistency, fingerprint
+
+
+def score(profile, min_consistency=MIN_CONSISTENCY):
+    errors = reconcile(profile)
+    result = {
+        "fingerprint": fingerprint(profile),
+        "consistency": consistency(profile),
+        "errors": errors,
+        "reason": None,
+    }
+
+    if errors:
+        result["reason"] = "inconsistent"
+        return False, result
+    if result["consistency"] < min_consistency:
+        result["reason"] = "low-consistency"
+        return False, result
+
+    return True, result

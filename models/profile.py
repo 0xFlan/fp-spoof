@@ -1,39 +1,42 @@
-"""Profile data model + canonical constraints."""
-from dataclasses import dataclass, field, asdict
-from typing import Any
+"""Profile record.
 
-# Cross-field constraints. Violation => reject at reconcile().
-CONSTRAINTS = [
-    ("browser","safari",("touchPoints",7),("plugins",["none"])),
-    ("platform","windows",("architecture",["amd64"])),
-    ("platform","mac",("architecture",["x86_64"])),
-    ("platform","ios",("architecture",["arm64"])),
-]
+A profile is an IMMUTABLE bundle of the signals a page can read. Every field
+must be identical across visits for a given profile (see fpr/stability.py) and
+must vary between profiles (see fpr/entropy.py).
 
-@dataclass
+`seed` is the only state needed to re-mint an identical profile.
+"""
+from __future__ import annotations
+
+from dataclasses import asdict, dataclass
+
+
+@dataclass(frozen=True)
 class Profile:
-    name: str = "pool-default"
-    pool: str = "default"
-    browser: str = "chrome"
-    platform: str = "windows"
-    screenX: int = 1920
-    screenY: int = 1080
-    deviceMemory: int = 8
-    hardwareConcurrency: int = 8
-    pixelRatio: float = 1.0
-    languagesZ: list[str] = field(default_factory=lambda: ["en-US","en"])
-    sensors: bool = False
-    touchPoints: int = 14
-    ua: str = ""
-    plugins: tuple[str,...] = ("PDF Viewer","Java")
+    seed: int
+    name: str
+    pool: str
+    browser: str
+    platform: str
+    ua: str
+    platformKey: str
+    screenX: int
+    screenY: int
+    deviceMemory: int
+    hardwareConcurrency: int
+    pixelRatio: float
+    touchPoints: int
+    sensors: bool
+    # Immutable defaults only: dataclasses reject list/dict defaults.
+    plugins: tuple = ()
     pdfViewer: str = ""
     java: str = ""
-    platformKey: str = ""
-    zString: str = ""
+    languagesZ: tuple = ("en-US", "en")
+    zone: int = 10
+    wglVendor: str = ""
+    wglRenderer: str = ""
+    wgpuAdapter: str = ""
+    canvasSalt: int = 0
 
-    @property
-    def hits(self): return getattr(self,"_hits",0)
-    @hits.setter
-    def hits(self,v): self._hits=v
-
-    def to_dict(self): return asdict(self)
+    def to_dict(self) -> dict:
+        return asdict(self)

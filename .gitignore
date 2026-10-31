@@ -1,11 +1,16 @@
-*.pyc
 __pycache__/
-api_run.log
-_files.dump
-*.db
-build/
-.pyd
-__pycache__
-pkgutil/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+env/
 
-[filter "sqlite3"]	exclude = *.db	hide = --diff-filter=a -- .git
+# Generated state: profiles DB and render caches
+var/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Local secrets
+.env
