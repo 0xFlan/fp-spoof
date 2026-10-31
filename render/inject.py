@@ -5,9 +5,10 @@ every visit for one profile (or the fingerprint moves), and they must DIFFER
 between profiles (or every profile collapses into one device). Every value
 here is derived from the profile alone, so both hold.
 
-Properties the engine does not expose are not defined at all. Defining one
-is a contradiction the verifier catches, and the fix belongs here rather
-than in a special case per browser.
+Where a value lives matters as much as the value. A real browser exposes
+these as inherited getters on Navigator.prototype / Screen.prototype, so an
+own property on the instance is a tell even when the number is right.
+Properties the engine does not expose are not defined at all.
 """
 
 from __future__ import annotations
@@ -53,24 +54,54 @@ INIT_SCRIPT = r"""
 (() => {
   const P = __FP_SPOOF_PROFILE__;
 
+  // Functions whose source should read as native.
+  const disguised = [];
+  const originalToString = Function.prototype.toString;
+  const toString = function toString() {
+    if (this === toString || disguised.indexOf(this) !== -1) {
+      return 'function ' + (this.name || '') + '() { [native code] }';
+    }
+    return originalToString.call(this);
+  };
+  try {
+    Object.defineProperty(Function.prototype, 'toString', {
+      value: toString, configurable: true, writable: true,
+    });
+  } catch (err) {}
+
   const define = (target, name, value) => {
     try {
       Object.defineProperty(target, name, {
         get: () => value, configurable: true, enumerable: true,
       });
-    } catch (err) { /* host object is frozen; nothing to do */ }
+      return true;
+    } catch (err) { return false; }
   };
 
-  define(navigator, 'hardwareConcurrency', P.cores);
+  // Prefer the prototype, then clear any own property that would shadow it.
+  const inherit = (proto, instance, name, value) => {
+    if (proto && define(proto, name, value)) {
+      try {
+        if (instance && Object.prototype.hasOwnProperty.call(instance, name)) {
+          delete instance[name];
+        }
+      } catch (err) {}
+      return;
+    }
+    if (instance) define(instance, name, value);
+  };
+
+  const navigatorProto = window.Navigator && Navigator.prototype;
+  inherit(navigatorProto, navigator, 'hardwareConcurrency', P.cores);
   if (P.caps.deviceMemory) {
-    define(navigator, 'deviceMemory', P.memory);
+    inherit(navigatorProto, navigator, 'deviceMemory', P.memory);
   }
-  define(navigator, 'platform', P.platformKey);
-  define(navigator, 'language', P.languages[0]);
-  define(navigator, 'languages', P.languages);
-  define(navigator, 'webdriver', false);
-  define(navigator, 'maxTouchPoints', P.touchPoints);
-  define(navigator, 'pdfViewerEnabled', P.pdf);
+  inherit(navigatorProto, navigator, 'platform', P.platformKey);
+  inherit(navigatorProto, navigator, 'language', P.languages[0]);
+  inherit(navigatorProto, navigator, 'languages', P.languages);
+  inherit(navigatorProto, navigator, 'webdriver', false);
+  inherit(navigatorProto, navigator, 'maxTouchPoints', P.touchPoints);
+  inherit(navigatorProto, navigator, 'pdfViewerEnabled', P.pdf);
 
   try {
     const makePlugin = (name) => ({
@@ -80,21 +111,22 @@ INIT_SCRIPT = r"""
     plugins.item = (i) => plugins[i] || null;
     plugins.namedItem = (n) => plugins.find((p) => p.name === n) || null;
     plugins.refresh = () => undefined;
-    define(navigator, 'plugins', plugins);
+    inherit(navigatorProto, navigator, 'plugins', plugins);
   } catch (err) {}
 
-  define(window, 'devicePixelRatio', P.dpr);
-  define(screen, 'width', P.screenX);
-  define(screen, 'height', P.screenY);
-  define(screen, 'availWidth', P.screenX);
-  define(screen, 'availHeight', P.screenY - (P.platform === 'windows' ? 40 : 0));
-  define(screen, 'colorDepth', 24);
-  define(screen, 'pixelDepth', 24);
+  const screenProto = window.Screen && Screen.prototype;
+  inherit(screenProto, screen, 'width', P.screenX);
+  inherit(screenProto, screen, 'height', P.screenY);
+  inherit(screenProto, screen, 'availWidth', P.screenX);
+  inherit(screenProto, screen, 'availHeight', P.screenY - (P.platform === 'windows' ? 40 : 0));
+  inherit(screenProto, screen, 'colorDepth', 24);
+  inherit(screenProto, screen, 'pixelDepth', 24);
+  inherit(window.Window && Window.prototype, window, 'devicePixelRatio', P.dpr);
 
   const patchGL = (proto) => {
     if (!proto || !proto.getParameter) return;
     const original = proto.getParameter;
-    proto.getParameter = function (parameter) {
+    const patched = function getParameter(parameter) {
       try {
         if (parameter === 0x9245) return P.webglVendor;
         if (parameter === 0x9246) return P.webglRenderer;
@@ -102,6 +134,8 @@ INIT_SCRIPT = r"""
       } catch (err) {}
       return original.apply(this, arguments);
     };
+    proto.getParameter = patched;
+    disguised.push(patched);
   };
   try { patchGL(window.WebGLRenderingContext && WebGLRenderingContext.prototype); } catch (err) {}
   try { patchGL(window.WebGL2RenderingContext && WebGL2RenderingContext.prototype); } catch (err) {}
@@ -117,7 +151,7 @@ INIT_SCRIPT = r"""
   try {
     if (window.CanvasRenderingContext2D) {
       const original = CanvasRenderingContext2D.prototype.getImageData;
-      CanvasRenderingContext2D.prototype.getImageData = function () {
+      const patched = function getImageData() {
         const image = original.apply(this, arguments);
         const data = image.data;
         const pixels = Math.floor(data.length / 4);
@@ -131,13 +165,15 @@ INIT_SCRIPT = r"""
         }
         return image;
       };
+      CanvasRenderingContext2D.prototype.getImageData = patched;
+      disguised.push(patched);
     }
   } catch (err) {}
 
   try {
     if (window.HTMLCanvasElement) {
-      const toDataURL = HTMLCanvasElement.prototype.toDataURL;
-      HTMLCanvasElement.prototype.toDataURL = function () {
+      const original = HTMLCanvasElement.prototype.toDataURL;
+      const patched = function toDataURL() {
         try {
           const ctx = this.getContext('2d');
           if (ctx && this.width && this.height) {
@@ -148,8 +184,10 @@ INIT_SCRIPT = r"""
             ctx.putImageData(stamp, x, y);
           }
         } catch (err) {}
-        return toDataURL.apply(this, arguments);
+        return original.apply(this, arguments);
       };
+      HTMLCanvasElement.prototype.toDataURL = patched;
+      disguised.push(patched);
     }
   } catch (err) {}
 })();
