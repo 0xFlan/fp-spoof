@@ -1,4 +1,5 @@
 """Browser tests. Opt in with FP_SPOOF_BROWSER=1 after installing playwright."""
+
 import os
 
 import pytest
@@ -19,7 +20,6 @@ def test_live_page_reports_the_profile():
         page = context.new_page()
         page.goto("about:blank")
         observed = page.evaluate(PROBE)
-
     assert diff(profile, observed) == []
 
 
@@ -34,5 +34,15 @@ def test_two_profiles_render_differently():
             page = context.new_page()
             page.goto("about:blank")
             rendered.append(page.evaluate(PROBE))
-
     assert rendered[0] != rendered[1]
+
+
+def test_the_page_cannot_tell_it_is_spoofed():
+    from render.driver import session
+    from synth.mint import mint
+    from verify.detectability import findings
+
+    with session(mint(111), headless=True) as context:
+        page = context.new_page()
+        page.goto("about:blank")
+        assert findings(page) == []
