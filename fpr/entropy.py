@@ -18,6 +18,16 @@ from constants import MAX_KL_BITS, MIN_FIELD_BITS
 
 DEFAULT_FIELDS = ("deviceMemory", "hardwareConcurrency", "pixelRatio", "zone")
 
+# Fields that carry less than MIN_FIELD_BITS because reality does, with the
+# reason. Gating these would push the generator to invent variety that real
+# hardware does not have: a population spread across 1.5x and 3x displays is
+# not more realistic, it is just wrong. They are still checked for KL
+# divergence and for values the truth set never contains.
+LOW_ENTROPY_FIELDS = {
+    "pixelRatio": "bimodal by nature: displays are 1x or 2x, so one bit is the ceiling",
+    "zone": "a handful of plausible UTC offsets; this field corroborates, it does not distinguish",
+}
+
 
 def empirical(values) -> dict:
     """Frequency table. Duplicate entries in a list are intentional weight."""
@@ -91,10 +101,10 @@ def population_report(profiles, truth=None, fields=DEFAULT_FIELDS) -> dict:
     return report
 
 
-def passes(report, min_bits=MIN_FIELD_BITS, max_kl=MAX_KL_BITS):
+def passes(report, min_bits=MIN_FIELD_BITS, max_kl=MAX_KL_BITS, low_entropy=LOW_ENTROPY_FIELDS):
     failures = []
     for field, entry in report.items():
-        if entry["bits"] < min_bits:
+        if entry["bits"] < min_bits and field not in low_entropy:
             failures.append(f"{field}: bits {entry['bits']} < {min_bits}")
         if "kl" in entry and entry["kl"] > max_kl:
             failures.append(f"{field}: kl {entry['kl']} > {max_kl}")

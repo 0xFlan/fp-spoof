@@ -29,6 +29,14 @@ jobs:
       - name: Tests
         run: python -m pytest tests -q
 
+      - name: CLI wiring
+        run: |
+          python -m api.run --help > /dev/null
+          python -m api.run live --help > /dev/null
+          python -m api.run mint --platform ios --browser chrome > /dev/null; test $? -eq 2
+
+      # audit is expected to report divergences until the generation tables and
+      # the curated truth are reconciled on purpose; the gate is that it runs.
       - name: CLI smoke test
         run: |
           python -m api.run probe --seed 111 --platform windows

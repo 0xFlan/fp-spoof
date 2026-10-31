@@ -4,6 +4,7 @@
     python -m api.run probe --seed 111 --platform windows
     python -m api.run list  [--pool default]
     python -m api.run audit --n 200 --platform windows
+    python -m api.run live  --seed 111 --url https://example.com [--headed] [--fpjs]
 
 Exit codes: 0 accepted, 1 rejected, 2 usage error.
 """
@@ -15,6 +16,7 @@ import sys
 
 from constants import DEFAULT_POOL, DEFAULT_SEED
 from fpr import entropy
+from fpr.stability import digest
 from fix.reconcile import reconcile
 from models import store
 from synth import tables
@@ -79,13 +81,44 @@ def cmd_audit(args):
         "platform": args.platform,
         "n": len(profiles),
         "rejected": len(rejected),
-        "distinctFingerprints": len({profile.wglRenderer for profile in profiles}),
+        # Distinct FINGERPRINTS, not distinct wglRenderer values: every Apple
+        # device reports "Apple GPU", so counting renderers made a healthy
+        # population of 50 mac profiles look like a single device.
+        "distinctFingerprints": len({digest(profile) for profile in profiles}),
         "report": report,
         "passes": ok,
         "failures": failures,
     }, indent=2, default=str))
 
     return 0 if ok and not rejected else 1
+
+
+def cmd_live(args):
+    """Render the profile in a real browser and read it back."""
+    from render.driver import session
+    from verify.browser_probe import PROBE, diff
+
+    profile = mint(args.seed, _resolve_browser(args.platform, args.browser),
+                   args.platform, args.pool)
+
+    with session(profile, headless=not args.headed, root=args.profile_dir) as context:
+        page = context.new_page()
+        page.goto(args.url, wait_until="domcontentloaded")
+        observed = page.evaluate(PROBE)
+
+        detector = None
+        if args.fpjs:
+            from verify import fingerprintjs
+            detector = fingerprintjs.read(page)
+
+    problems = diff(profile, observed)
+    print(json.dumps({
+        "profile": profile.name,
+        "observed": observed,
+        "problems": problems,
+        "fingerprintjs": detector,
+    }, indent=2, default=str))
+    return 0 if not problems else 1
 
 
 def build_parser():
@@ -103,10 +136,20 @@ def build_parser():
         child.set_defaults(handler=handler)
         return child
 
-    add("mint", cmd_mint).add_argument("--name", default=None)
-    sub.choices["mint"].add_argument("--save", action="store_true")
+    mint_cmd = add("mint", cmd_mint)
+    mint_cmd.add_argument("--name", default=None)
+    mint_cmd.add_argument("--save", action="store_true")
+
     add("probe", cmd_probe)
-    add("audit", cmd_audit).add_argument("--n", type=int, default=200)
+
+    audit_cmd = add("audit", cmd_audit)
+    audit_cmd.add_argument("--n", type=int, default=200)
+
+    live_cmd = add("live", cmd_live)
+    live_cmd.add_argument("--url", default="about:blank")
+    live_cmd.add_argument("--headed", action="store_true")
+    live_cmd.add_argument("--profile-dir", default=None)
+    live_cmd.add_argument("--fpjs", action="store_true")
 
     listing = sub.add_parser("list")
     listing.add_argument("--pool", default=None)
@@ -118,7 +161,7 @@ def main(argv=None):
     args = build_parser().parse_args(argv)
     try:
         return args.handler(args)
-    except MintError as exc:
+    except (MintError, RuntimeError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
 

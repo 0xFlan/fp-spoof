@@ -92,6 +92,41 @@ def test_population_report_covers_default_fields():
     assert report["deviceMemory"]["bits"] > 0
 
 
+def test_low_entropy_fields_are_not_gated_on_bits():
+    report = {
+        "pixelRatio": {"n": 50, "bits": 1.0},
+        "zone": {"n": 50, "bits": 0.995},
+    }
+    assert entropy.passes(report) == (True, [])
+
+
+def test_high_entropy_fields_are_still_gated():
+    ok, failures = entropy.passes({"deviceMemory": {"n": 50, "bits": 0.5}})
+    assert not ok
+    assert "bits" in failures[0]
+
+
+def test_support_gaps_still_fail_a_low_entropy_field():
+    report = {
+        "pixelRatio": {
+            "n": 50,
+            "bits": 1.0,
+            "support": {"unknown": ["3"], "missing": []},
+        }
+    }
+    ok, failures = entropy.passes(report)
+    assert not ok
+    assert "truth never has" in failures[0]
+
+
+def test_cli_exposes_the_documented_commands():
+    from api.run import build_parser
+
+    parser = build_parser()
+    for command in ("mint", "probe", "list", "audit", "live"):
+        assert parser.parse_args([command]).command == command
+
+
 def test_store_upsert_is_idempotent(tmp_path, monkeypatch):
     from models import store
 
