@@ -64,16 +64,34 @@ jobs:
         with:
           python-version: "3.12"
 
+      # Quiet install: the apt and browser-download output runs to hundreds of
+      # lines and buries the assertions below, which are what this job is for.
       - name: Install
         run: |
-          pip install pytest playwright
-          python -m playwright install --with-deps chromium
+          set -o pipefail
+          pip install --quiet pytest playwright
+          python -m playwright install --with-deps chromium > /tmp/install.log 2>&1 || {
+            tail -n 50 /tmp/install.log
+            exit 1
+          }
 
+      # A skipped test exits 0, so without this guard the job can go green
+      # having started no browser at all.
       - name: Browser tests
         env:
           FP_SPOOF_BROWSER: "1"
-        run: python -m pytest tests/test_browser.py -q
+        run: |
+          set -o pipefail
+          python -m pytest tests/test_browser.py -q -rs | tee /tmp/pytest.txt
+          if grep -qE "[0-9]+ skipped" /tmp/pytest.txt; then
+            echo "::error::browser tests skipped; no browser was exercised"
+            exit 1
+          fi
+          grep -qE "[0-9]+ passed" /tmp/pytest.txt \
+            || { echo "::error::no tests passed"; exit 1; }
 
+      # Exits non-zero if any probed field disagrees with the profile, so this
+      # step is the end-to-end assertion; the JSON is here to be read.
       - name: Live probe end to end
         run: |
           python -m api.run live --seed 111 --platform windows --url about:blank
