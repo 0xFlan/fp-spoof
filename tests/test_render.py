@@ -1,4 +1,8 @@
 """Renderer tests that need no browser."""
+
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
+
 from render.headers import accept_language, headers, major_version
 from render.inject import PROFILE_TOKEN, init_script, payload
 from render.timezones import IANA_BY_ZONE
@@ -23,6 +27,18 @@ def test_init_script_differs_between_seeds():
     assert init_script(mint(111)) != init_script(mint(112))
 
 
+def test_payload_carries_the_engine_capabilities():
+    profile = mint(111, "edge", "windows")
+    assert payload(profile)["caps"] == tables.BROWSER_CAPS["edge"]
+
+
+def test_device_memory_is_only_defined_when_the_engine_has_it(monkeypatch):
+    profile = mint(111, "chrome", "windows")
+    assert "define(navigator, 'deviceMemory'" in init_script(profile)
+    monkeypatch.setitem(tables.BROWSER_CAPS["chrome"], "deviceMemory", False)
+    assert "define(navigator, 'deviceMemory'" not in init_script(profile)
+
+
 def test_chromium_sends_client_hints():
     profile = mint(111, "chrome", "windows")
     result = headers(profile)
@@ -36,9 +52,10 @@ def test_edge_brand_is_present():
     assert "Microsoft Edge" in result["sec-ch-ua"]
 
 
-def test_safari_sends_no_client_hints():
-    result = headers(mint(111, "safari", "mac"))
-    assert "sec-ch-ua" not in result
+def test_every_renderable_browser_sends_client_hints():
+    for platform, browsers in tables.ALLOWED.items():
+        for browser in browsers:
+            assert "sec-ch-ua" in headers(mint(111, browser, platform))
 
 
 def test_major_version_matches_the_ua():
@@ -56,6 +73,15 @@ def test_every_zone_has_a_dst_free_timezone():
             assert zone in IANA_BY_ZONE
 
 
+def test_zone_offsets_are_constant_year_round():
+    for zone, name in IANA_BY_ZONE.items():
+        tzinfo = ZoneInfo(name)
+        for month in (1, 7):
+            moment = datetime(2026, month, 15, 12, tzinfo=timezone.utc)
+            offset = moment.astimezone(tzinfo).utcoffset().total_seconds() / 3600
+            assert offset == zone, (name, month, offset)
+
+
 def test_diff_is_clean_when_the_page_matches():
     profile = mint(7, "chrome", "windows")
     assert diff(profile, payload(profile)) == []
@@ -68,3 +94,14 @@ def test_diff_reports_exactly_the_tampered_field():
     problems = diff(profile, observed)
     assert [problem["field"] for problem in problems] == ["cores"]
     assert problems[0]["expected"] == profile.hardwareConcurrency
+
+
+def test_diff_requires_an_unsupported_property_to_be_absent():
+    profile = mint(7, "chrome", "windows")
+    observed = dict(payload(profile))
+    caps = {"deviceMemory": False}
+    problems = diff(profile, observed, caps=caps)
+    assert [problem["field"] for problem in problems] == ["memory"]
+    assert problems[0]["expected"] is None
+    observed["memory"] = None
+    assert diff(profile, observed, caps=caps) == []

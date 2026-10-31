@@ -1,4 +1,5 @@
 """Deterministic-core tests. No browser required."""
+
 import pytest
 
 from fpr import entropy
@@ -6,6 +7,7 @@ from fpr.stability import digest
 from fix.reconcile import reconcile
 from synth import tables
 from synth.mint import MintError, mint
+from verify import truth
 from verify.fingerprintjs_vX import consistency
 
 ALL_COMBOS = [
@@ -18,11 +20,15 @@ FORBIDDEN_IN_GENERATOR = ("verify.truth", "TRUTH_PATH")
 
 # What navigator.platform actually returns, per engine. Anything outside this
 # set is a value no browser emits, so the renderer would leak immediately.
-REAL_NAVIGATOR_PLATFORM = {"Win32", "MacIntel", "Linux x86_64", "iPhone"}
+REAL_NAVIGATOR_PLATFORM = {"Win32", "MacIntel", "Linux x86_64"}
 
 # Chrome bucketed it to a power of two and clamps at 8 GiB, so nothing above 8
 # can appear in a real browser.
 CHROME_DEVICE_MEMORY = {0.25, 0.5, 1, 2, 4, 8}
+
+
+def _record(profile) -> dict:
+    return profile.to_dict()
 
 
 def test_mint_is_deterministic():
@@ -35,6 +41,11 @@ def test_mint_varies_by_seed():
 
 def test_digest_repeats_for_same_seed():
     assert digest(mint(111)) == digest(mint(111))
+
+
+def test_profile_name_identifies_the_device():
+    assert mint(111, "edge", "mac").name == "profile-edge-mac-111"
+    assert mint(111).name != mint(112).name
 
 
 def test_every_combo_mints_and_reconciles():
@@ -53,16 +64,78 @@ def test_generator_emits_only_device_memory_chrome_can_report():
 
 
 def test_truth_holds_only_device_memory_chrome_can_report():
-    from verify import truth
-
-    for platform in ("windows", "mac", "ios"):
+    for platform in truth.platforms():
         distribution = truth.distributions(platform).get("deviceMemory", {})
         assert set(distribution) <= CHROME_DEVICE_MEMORY, platform
+
+
+def test_truth_describes_every_platform_the_generator_offers():
+    assert set(truth.platforms()) == set(tables.ALLOWED)
 
 
 @pytest.mark.parametrize("platform,browser", ALL_COMBOS)
 def test_consistency_is_maximal(platform, browser):
     assert consistency(mint(7, browser, platform)) == 1.0
+
+
+@pytest.mark.parametrize("platform", sorted(tables.ALLOWED))
+def test_a_population_passes_the_audit_gates(platform):
+    browsers = tables.ALLOWED[platform]
+    profiles = [
+        mint(seed, browsers[seed % len(browsers)], platform) for seed in range(120)
+    ]
+    report = entropy.population_report(profiles, truth.distributions(platform))
+    ok, failures = entropy.passes(report)
+    assert ok, failures
+    assert [profile.name for profile in profiles if reconcile(profile)] == []
+
+
+def test_every_zone_is_reachable():
+    zones = {mint(seed).zone for seed in range(200)}
+    assert zones == set(tables.ZONE_OFFSETS)
+
+
+def test_screen_and_dpr_are_drawn_together():
+    for seed in range(120):
+        profile = mint(seed)
+        if profile.pixelRatio >= 2:
+            assert profile.screenX >= 1440, profile
+
+
+def test_cores_and_memory_are_drawn_together():
+    for seed in range(120):
+        profile = mint(seed)
+        if profile.hardwareConcurrency >= 12:
+            assert profile.deviceMemory >= 8, profile
+
+
+def test_language_and_zone_are_drawn_together():
+    for seed in range(120):
+        profile = mint(seed)
+        assert profile.zone in tables.LANGUAGE_ZONES[profile.languagesZ[0]]
+
+
+def test_every_language_has_zones_and_every_zone_a_language():
+    assert {language[0] for language in tables.LANGUAGES} == set(tables.LANGUAGE_ZONES)
+    for zones in tables.LANGUAGE_ZONES.values():
+        assert zones
+        assert set(zones) <= set(tables.ZONE_OFFSETS)
+
+
+def test_reconcile_catches_planted_contradictions():
+    base = _record(mint(7, "chrome", "windows"))
+
+    low_res_retina = dict(base, pixelRatio=2.0, screenX=1280, screenY=720)
+    assert "screen-vs-dpr" in reconcile(low_res_retina)
+
+    thin_memory = dict(base, hardwareConcurrency=16, deviceMemory=4)
+    assert "cores-vs-memory" in reconcile(thin_memory)
+
+    displaced = dict(base, languagesZ=("en-US", "en"), zone=9)
+    assert "zone-vs-language:en-US@9" in reconcile(displaced)
+
+    no_plugins = dict(base, plugins=())
+    assert "plugin-set" in reconcile(no_plugins)
 
 
 def test_reconcile_rejects_without_raising():
@@ -81,6 +154,35 @@ def test_unknown_browser_is_rejected():
 def test_unknown_platform_is_rejected():
     with pytest.raises(MintError):
         mint(1, "chrome", "beos")
+
+
+def test_safari_is_no_longer_expressible():
+    assert "safari" not in {b for browsers in tables.ALLOWED.values() for b in browsers}
+    assert not [key for key in tables.UA_TEMPLATES if key[0] == "safari"]
+    with pytest.raises(MintError):
+        mint(1, "safari", "mac")
+
+
+def test_ios_is_no_longer_expressible():
+    assert "ios" not in tables.ALLOWED
+    with pytest.raises(MintError):
+        mint(1, "chrome", "ios")
+
+
+def test_plugin_set_depends_only_on_the_browser():
+    for platform, browser in ALL_COMBOS:
+        expected = sorted(tables.PLUGINS_BY_BROWSER[browser])
+        for seed in range(12):
+            assert sorted(mint(seed, browser, platform).plugins) == expected
+    assert set(tables.PLUGINS_BY_BROWSER["chrome"]) != set(
+        tables.PLUGINS_BY_BROWSER["edge"]
+    )
+
+
+def test_a_capability_gap_rejects_a_claimed_value(monkeypatch):
+    record = _record(mint(7, "chrome", "windows"))
+    monkeypatch.setitem(tables.BROWSER_CAPS["chrome"], "deviceMemory", False)
+    assert "deviceMemory-unsupported" in reconcile(record)
 
 
 def test_generator_never_reads_truth():
