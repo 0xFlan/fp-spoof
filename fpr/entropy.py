@@ -94,12 +94,14 @@ def population_report(profiles, truth=None, fields=DEFAULT_FIELDS) -> dict:
     for field in fields:
         values = [getattr(profile, field) for profile in profiles]
         entry = {"n": len(values), "bits": round(field_bits(values), 3)}
+        # Only compare against truth for fields truth actually describes; a
+        # field it says nothing about has no support to diff against.
         reference = truth.get(field)
         if reference:
             entry["kl"] = round(kl_bits(values, reference), 3)
-        gaps = support_gaps(values, reference)
-        if gaps["unknown"] or gaps["missing"]:
-            entry["support"] = gaps
+            gaps = support_gaps(values, reference)
+            if gaps["unknown"] or gaps["missing"]:
+                entry["support"] = gaps
         report[field] = entry
     return report
 
