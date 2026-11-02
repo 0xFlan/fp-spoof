@@ -8,6 +8,7 @@ receive the persona's User-Agent. Both the launcher flag and the extension's
 
 from __future__ import annotations
 
+import json
 import random
 import threading
 import time
@@ -77,6 +78,20 @@ def socks_persona(port: int, seed: int = 41) -> dict:
     return persona
 
 
+def mirrored_socks_persona(port: int) -> dict:
+    """Use the extension's baked default so its DNR headers agree with CDP."""
+    payload = json.loads((EXTENSION / "personas.json").read_text(encoding="utf-8"))
+    persona = json.loads(json.dumps(payload["personas"][payload["default"]]))
+    persona["proxy"] = {
+        "mode": "fixed_servers",
+        "scheme": "socks5",
+        "host": "127.0.0.1",
+        "port": port,
+        "bypass": [],
+    }
+    return persona
+
+
 @pytest.mark.skipif(chrome_path() is None, reason="no Chromium-family browser installed")
 def test_launcher_sends_traffic_through_a_real_socks5_listener():
     origin = Origin()
@@ -111,7 +126,7 @@ def test_launcher_sends_traffic_through_a_real_socks5_listener():
 def test_the_extension_applies_a_socks5_route_through_chrome_proxy():
     origin = Origin()
     with Socks5Listener(("127.0.0.1", origin.port)) as socks:
-        persona = socks_persona(socks.port, seed=42)
+        persona = mirrored_socks_persona(socks.port)
         session = launch(persona, url="about:blank", headless=True,
                          extension=str(EXTENSION))
         try:

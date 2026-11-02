@@ -612,7 +612,7 @@ Package size, measured with `python tools/bench_package.py`:
 
 ```
 extension                131.7 KB raw   39.0 KB gzip   18 files
-repository total         449.8 KB raw   144.4 KB gzip  74 files
+repository total         450.3 KB raw   144.5 KB gzip  74 files
 persona mirror           10.6 KB (2% of the total), 8 personas
 ```
 
