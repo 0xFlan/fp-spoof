@@ -1,1 +1,197 @@
-{"browsers": {"chrome": {"wu": {"windows": "5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36", "linux": "5.0 (X11; Linux x86_64) AppleWebKit/537.36", "mac": "5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36", "ios": "5.0 (iPhone; iOS 17_0 like Mac OS X) AppleWebKit/605.1.15"}, "platforms": ["windows", "linux", "mac"], "sensors": false, "touchPoints": 14, "plugins": ["PDF Viewer", "Java"], "pdfViewer": {"windows": "Microsoft Edge", "linux": "Chrome PDF Plugin", "mac": "Chrome PDF Plugin"}, "java": {"windows": "11.0.0", "linux": "11.0.2", "mac": "11.0.2"}}, "safari": {"wu": {"ios": "604.1.26", "mac": "605.1.15", "windows": "605.1.15"}, "platforms": ["ios", "mac", "windows"], "sensors": true, "touchPoints": 7, "plugins": ["none"], "pdfViewer": {"ios": "Chrome PDF Viewer", "mac": "Chrome PDF Viewer", "windows": "Chrome PDF Viewer"}, "java": {"ios": "", "mac": "", "windows": ""}}, "edge": {"wu": {"windows": "183.0.3984.51", "linux": "120.0.0.0", "mac": "120.0.0.0"}, "platforms": ["windows", "linux", "mac"], "sensors": false, "touchPoints": 9, "plugins": ["PDF Viewer", "Java"], "pdfViewer": {"windows": "Microsoft Edge", "mac": "Microsoft Edge", "linux": "Microsoft Edge"}, "java": {"windows": "11.0.0", "mac": "11.0.2", "linux": "11.0.2"}}}, "os": {"windows": {"zone": [9, 10, 11], "concord": 0, "zTwo": [10, 11, 12], "zThree": [25, 30, 40], "zFour": [30, 50, 90], "core": [64, 96, 128], "conc": [4, 8, 12], "mem": [8, 16, 32, 64]}, "mac": {"zOne": [9, 10, 11], "concord": 0, "zTwo": [10, 11, 12], "zThree": [25, 30, 40], "zFour": [30, 50, 90], "core": [64, 96, 128], "conc": [4, 8, 8, 12], "mem": [8, 16, 32]}, "ios": {"zOne": [10, 16], "concord": 0, "zTwo": [10, 16], "zThree": [16, 24], "zFour": [24, 64], "core": [16, 24], "conc": [0], "mem": [4, 8]}}}
+{
+  "version": 2,
+  "browsers": {
+    "chrome": {
+      "platforms": ["windows", "mac", "linux"],
+      "versions": ["128.0.6613.138", "129.0.6668.90", "130.0.6723.92", "131.0.6778.86"],
+      "brand": "Google Chrome",
+      "vendor": "Google Inc.",
+      "browserToken": "Chrome/",
+      "uaPlatformToken": {
+        "windows": "Windows NT 10.0",
+        "mac": "Macintosh",
+        "linux": "X11; Linux x86_64"
+      },
+      "ua": {
+        "windows": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{version} Safari/537.36",
+        "mac": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{version} Safari/537.36",
+        "linux": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{version} Safari/537.36"
+      },
+      "sensors": false,
+      "supportsDeviceMemory": true,
+      "plugins": [
+        "PDF Viewer",
+        "Chrome PDF Viewer",
+        "Chromium PDF Viewer",
+        "Google Chrome PDF Viewer",
+        "Microsoft Edge PDF Viewer",
+        "WebKit built-in PDF"
+      ],
+      "chBrands": ["Chromium", "Google Chrome"]
+    },
+    "edge": {
+      "platforms": ["windows", "mac", "linux"],
+      "versions": ["128.0.2739.67", "129.0.2792.65", "130.0.2849.68", "131.0.2903.86"],
+      "brand": "Microsoft Edge",
+      "vendor": "Google Inc.",
+      "browserToken": "Edg/",
+      "uaPlatformToken": {
+        "windows": "Windows NT 10.0",
+        "mac": "Macintosh",
+        "linux": "X11; Linux x86_64"
+      },
+      "ua": {
+        "windows": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{version} Safari/537.36 Edg/{version}",
+        "mac": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{version} Safari/537.36 Edg/{version}",
+        "linux": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{version} Safari/537.36 Edg/{version}"
+      },
+      "sensors": false,
+      "supportsDeviceMemory": true,
+      "plugins": [
+        "PDF Viewer",
+        "Chrome PDF Viewer",
+        "Chromium PDF Viewer",
+        "Google Chrome PDF Viewer",
+        "Microsoft Edge PDF Viewer",
+        "WebKit built-in PDF"
+      ],
+      "chBrands": ["Microsoft Edge", "Chromium"]
+    },
+    "safari": {
+      "platforms": ["mac", "ios"],
+      "versions": ["17.6", "18.0", "18.1"],
+      "brand": "Safari",
+      "vendor": "Apple Computer, Inc.",
+      "browserToken": "Version/",
+      "uaPlatformToken": {
+        "mac": "Macintosh",
+        "ios": "iPhone"
+      },
+      "ua": {
+        "mac": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/{version} Safari/605.1.15",
+        "ios": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/{version} Mobile/15E148 Safari/604.1"
+      },
+      "sensors": true,
+      "supportsDeviceMemory": false,
+      "plugins": [],
+      "chBrands": []
+    }
+  },
+  "os": {
+    "windows": {
+      "platformKey": "Win32",
+      "architecture": "x86_64",
+      "archCh": "x86",
+      "screen": "desktop",
+      "availInsetY": 40,
+      "mem": [8, 16, 32],
+      "conc": [4, 6, 8, 12, 16],
+      "zone": [10, 11],
+      "chPlatform": "\"Windows\"",
+      "platformVersion": ["10.0.0", "15.0.0"]
+    },
+    "mac": {
+      "platformKey": "MacIntel",
+      "architecture": "arm64",
+      "archCh": "arm",
+      "screen": "desktop",
+      "availInsetY": 25,
+      "mem": [8, 16, 32, 64],
+      "conc": [8, 10, 12],
+      "zone": [14, 15],
+      "chPlatform": "\"macOS\"",
+      "platformVersion": ["14.6.0", "15.1.0"]
+    },
+    "linux": {
+      "platformKey": "Linux x86_64",
+      "architecture": "x86_64",
+      "archCh": "x86",
+      "screen": "desktop",
+      "availInsetY": 24,
+      "mem": [8, 16, 32],
+      "conc": [4, 8, 16],
+      "zone": [5, 6],
+      "chPlatform": "\"Linux\"",
+      "platformVersion": ["6.8.0"]
+    },
+    "ios": {
+      "platformKey": "iPhone",
+      "architecture": "arm64",
+      "archCh": "arm",
+      "screen": "mobile",
+      "availInsetY": 0,
+      "mem": [],
+      "conc": [4, 6],
+      "zone": [17, 18],
+      "chPlatform": "\"iOS\"",
+      "platformVersion": ["17.6.0", "18.1.0"]
+    }
+  },
+  "screens": {
+    "desktop": [
+      [1920, 1080, 1.0],
+      [2560, 1440, 1.0],
+      [1366, 768, 1.0],
+      [1536, 864, 1.25],
+      [1680, 1050, 1.0],
+      [1920, 1200, 1.0],
+      [2880, 1800, 2.0],
+      [2560, 1600, 2.0],
+      [1440, 900, 2.0],
+      [3840, 2160, 1.5],
+      [1512, 982, 2.0],
+      [1470, 956, 2.0],
+      [1600, 900, 1.0],
+      [3440, 1440, 1.0]
+    ],
+    "mobile": [
+      [390, 844, 3.0],
+      [393, 852, 3.0],
+      [430, 932, 3.0],
+      [375, 812, 3.0],
+      [428, 926, 2.0]
+    ]
+  },
+  "gpus": {
+    "windows": [
+      {"arch": "x86_64", "vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+      {"arch": "x86_64", "vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 SUPER Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+      {"arch": "x86_64", "vendor": "Google Inc. (Intel)", "renderer": "ANGLE (Intel, Intel(R) UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+      {"arch": "x86_64", "vendor": "Google Inc. (AMD)", "renderer": "ANGLE (AMD, AMD Radeon RX 6600 Direct3D11 vs_5_0 ps_5_0, D3D11)"}
+    ],
+    "mac": [
+      {"arch": "arm64", "vendor": "Google Inc. (Apple)", "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M1, Unspecified Version)"},
+      {"arch": "arm64", "vendor": "Google Inc. (Apple)", "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)"},
+      {"arch": "arm64", "vendor": "Google Inc. (Apple)", "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2 Pro, Unspecified Version)"},
+      {"arch": "x86_64", "vendor": "Google Inc. (Intel Inc.)", "renderer": "ANGLE (Intel Inc., Intel(R) Iris(TM) Plus Graphics 640, OpenGL 4.1)"}
+    ],
+    "linux": [
+      {"arch": "x86_64", "vendor": "Google Inc. (Intel)", "renderer": "ANGLE (Intel, Mesa Intel(R) UHD Graphics 620 (KBL GT2), OpenGL 4.6)"},
+      {"arch": "x86_64", "vendor": "Google Inc. (NVIDIA)", "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3060/PCIe/SSE2, OpenGL 4.5.0)"}
+    ],
+    "ios": [
+      {"arch": "arm64", "vendor": "Apple Inc.", "renderer": "Apple GPU"}
+    ]
+  },
+  "locale": {
+    "languages": [
+      ["en-US", "en"],
+      ["en-GB", "en"],
+      ["de-DE", "de", "en"],
+      ["fr-FR", "fr", "en"],
+      ["es-ES", "es", "en"],
+      ["ja-JP", "ja", "en"],
+      ["pt-BR", "pt", "en"]
+    ],
+    "timezones": {
+      "en-US": ["America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles"],
+      "en-GB": ["Europe/London"],
+      "de-DE": ["Europe/Berlin"],
+      "fr-FR": ["Europe/Paris"],
+      "es-ES": ["Europe/Madrid"],
+      "ja-JP": ["Asia/Tokyo"],
+      "pt-BR": ["America/Sao_Paulo"]
+    }
+  },
+  "minEntropyBits": 12.0
+}

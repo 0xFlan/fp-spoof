@@ -9,3 +9,7 @@ __pycache__
 pkgutil/
 
 [filter "sqlite3"]	exclude = *.db	hide = --diff-filter=a -- .git
+.venv/
+*.egg-info/
+.pytest_cache/
+artifacts/

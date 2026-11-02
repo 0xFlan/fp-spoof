@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fp-spoof"
+version = "0.2.0"
+description = "Local offline browser-fingerprint persona generator and spoofing toolkit"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[project.scripts]
+fps = "api.cli:main"
+
+[tool.setuptools]
+packages = ["api", "fpr", "fix", "models", "verify", "launcher"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

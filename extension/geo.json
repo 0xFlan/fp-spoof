@@ -1,0 +1,271 @@
+{
+  "cities": {
+    "Africa/Cairo": {
+      "accuracy": 90,
+      "city": "Cairo",
+      "country": "EG",
+      "latitude": 30.0444,
+      "longitude": 31.2357
+    },
+    "Africa/Johannesburg": {
+      "accuracy": 90,
+      "city": "Johannesburg",
+      "country": "ZA",
+      "latitude": -26.2041,
+      "longitude": 28.0473
+    },
+    "Africa/Lagos": {
+      "accuracy": 90,
+      "city": "Lagos",
+      "country": "NG",
+      "latitude": 6.5244,
+      "longitude": 3.3792
+    },
+    "America/Bogota": {
+      "accuracy": 90,
+      "city": "Bogota",
+      "country": "CO",
+      "latitude": 4.711,
+      "longitude": -74.0721
+    },
+    "America/Chicago": {
+      "accuracy": 80,
+      "city": "Chicago",
+      "country": "US",
+      "latitude": 41.8781,
+      "longitude": -87.6298
+    },
+    "America/Denver": {
+      "accuracy": 80,
+      "city": "Denver",
+      "country": "US",
+      "latitude": 39.7392,
+      "longitude": -104.9903
+    },
+    "America/Los_Angeles": {
+      "accuracy": 80,
+      "city": "Los Angeles",
+      "country": "US",
+      "latitude": 34.0522,
+      "longitude": -118.2437
+    },
+    "America/Mexico_City": {
+      "accuracy": 90,
+      "city": "Mexico City",
+      "country": "MX",
+      "latitude": 19.4326,
+      "longitude": -99.1332
+    },
+    "America/New_York": {
+      "accuracy": 80,
+      "city": "New York",
+      "country": "US",
+      "latitude": 40.7128,
+      "longitude": -74.006
+    },
+    "America/Sao_Paulo": {
+      "accuracy": 90,
+      "city": "Sao Paulo",
+      "country": "BR",
+      "latitude": -23.5505,
+      "longitude": -46.6333
+    },
+    "America/Toronto": {
+      "accuracy": 80,
+      "city": "Toronto",
+      "country": "CA",
+      "latitude": 43.6532,
+      "longitude": -79.3832
+    },
+    "America/Vancouver": {
+      "accuracy": 80,
+      "city": "Vancouver",
+      "country": "CA",
+      "latitude": 49.2827,
+      "longitude": -123.1207
+    },
+    "Asia/Dubai": {
+      "accuracy": 80,
+      "city": "Dubai",
+      "country": "AE",
+      "latitude": 25.2048,
+      "longitude": 55.2708
+    },
+    "Asia/Hong_Kong": {
+      "accuracy": 70,
+      "city": "Hong Kong",
+      "country": "HK",
+      "latitude": 22.3193,
+      "longitude": 114.1694
+    },
+    "Asia/Jakarta": {
+      "accuracy": 90,
+      "city": "Jakarta",
+      "country": "ID",
+      "latitude": -6.2088,
+      "longitude": 106.8456
+    },
+    "Asia/Kolkata": {
+      "accuracy": 90,
+      "city": "Mumbai",
+      "country": "IN",
+      "latitude": 19.076,
+      "longitude": 72.8777
+    },
+    "Asia/Seoul": {
+      "accuracy": 70,
+      "city": "Seoul",
+      "country": "KR",
+      "latitude": 37.5665,
+      "longitude": 126.978
+    },
+    "Asia/Shanghai": {
+      "accuracy": 80,
+      "city": "Shanghai",
+      "country": "CN",
+      "latitude": 31.2304,
+      "longitude": 121.4737
+    },
+    "Asia/Singapore": {
+      "accuracy": 70,
+      "city": "Singapore",
+      "country": "SG",
+      "latitude": 1.3521,
+      "longitude": 103.8198
+    },
+    "Asia/Taipei": {
+      "accuracy": 70,
+      "city": "Taipei",
+      "country": "TW",
+      "latitude": 25.033,
+      "longitude": 121.5654
+    },
+    "Asia/Tokyo": {
+      "accuracy": 70,
+      "city": "Tokyo",
+      "country": "JP",
+      "latitude": 35.6895,
+      "longitude": 139.6917
+    },
+    "Australia/Sydney": {
+      "accuracy": 80,
+      "city": "Sydney",
+      "country": "AU",
+      "latitude": -33.8688,
+      "longitude": 151.2093
+    },
+    "Europe/Amsterdam": {
+      "accuracy": 55,
+      "city": "Amsterdam",
+      "country": "NL",
+      "latitude": 52.3676,
+      "longitude": 4.9041
+    },
+    "Europe/Berlin": {
+      "accuracy": 55,
+      "city": "Berlin",
+      "country": "DE",
+      "latitude": 52.52,
+      "longitude": 13.405
+    },
+    "Europe/Dublin": {
+      "accuracy": 65,
+      "city": "Dublin",
+      "country": "IE",
+      "latitude": 53.3498,
+      "longitude": -6.2603
+    },
+    "Europe/Helsinki": {
+      "accuracy": 60,
+      "city": "Helsinki",
+      "country": "FI",
+      "latitude": 60.1699,
+      "longitude": 24.9384
+    },
+    "Europe/Lisbon": {
+      "accuracy": 60,
+      "city": "Lisbon",
+      "country": "PT",
+      "latitude": 38.7223,
+      "longitude": -9.1393
+    },
+    "Europe/London": {
+      "accuracy": 60,
+      "city": "London",
+      "country": "GB",
+      "latitude": 51.5072,
+      "longitude": -0.1276
+    },
+    "Europe/Madrid": {
+      "accuracy": 70,
+      "city": "Madrid",
+      "country": "ES",
+      "latitude": 40.4168,
+      "longitude": -3.7038
+    },
+    "Europe/Paris": {
+      "accuracy": 55,
+      "city": "Paris",
+      "country": "FR",
+      "latitude": 48.8566,
+      "longitude": 2.3522
+    },
+    "Europe/Prague": {
+      "accuracy": 60,
+      "city": "Prague",
+      "country": "CZ",
+      "latitude": 50.0755,
+      "longitude": 14.4378
+    },
+    "Europe/Rome": {
+      "accuracy": 60,
+      "city": "Rome",
+      "country": "IT",
+      "latitude": 41.9028,
+      "longitude": 12.4964
+    },
+    "Europe/Stockholm": {
+      "accuracy": 60,
+      "city": "Stockholm",
+      "country": "SE",
+      "latitude": 59.3293,
+      "longitude": 18.0686
+    },
+    "Europe/Vienna": {
+      "accuracy": 60,
+      "city": "Vienna",
+      "country": "AT",
+      "latitude": 48.2082,
+      "longitude": 16.3738
+    },
+    "Europe/Warsaw": {
+      "accuracy": 60,
+      "city": "Warsaw",
+      "country": "PL",
+      "latitude": 52.2297,
+      "longitude": 21.0122
+    },
+    "Europe/Zurich": {
+      "accuracy": 55,
+      "city": "Zurich",
+      "country": "CH",
+      "latitude": 47.3769,
+      "longitude": 8.5417
+    },
+    "Pacific/Auckland": {
+      "accuracy": 80,
+      "city": "Auckland",
+      "country": "NZ",
+      "latitude": -36.8485,
+      "longitude": 174.7633
+    },
+    "UTC": {
+      "accuracy": 120,
+      "city": "Reykjavik",
+      "country": "IS",
+      "latitude": 64.1466,
+      "longitude": -21.9426
+    }
+  },
+  "updated": "2026-11-02T20:21:02Z"
+}

@@ -1,0 +1,272 @@
+{
+  "version": 1,
+  "note": "City coordinates per timezone. Personas carry these so navigator.geolocation agrees with the reported zone.",
+  "cities": {
+    "Europe/Berlin": {
+      "city": "Berlin",
+      "country": "DE",
+      "latitude": 52.52,
+      "longitude": 13.405,
+      "accuracy": 55
+    },
+    "Europe/Vienna": {
+      "city": "Vienna",
+      "country": "AT",
+      "latitude": 48.2082,
+      "longitude": 16.3738,
+      "accuracy": 60
+    },
+    "Europe/Zurich": {
+      "city": "Zurich",
+      "country": "CH",
+      "latitude": 47.3769,
+      "longitude": 8.5417,
+      "accuracy": 55
+    },
+    "Europe/London": {
+      "city": "London",
+      "country": "GB",
+      "latitude": 51.5072,
+      "longitude": -0.1276,
+      "accuracy": 60
+    },
+    "Europe/Dublin": {
+      "city": "Dublin",
+      "country": "IE",
+      "latitude": 53.3498,
+      "longitude": -6.2603,
+      "accuracy": 65
+    },
+    "Europe/Paris": {
+      "city": "Paris",
+      "country": "FR",
+      "latitude": 48.8566,
+      "longitude": 2.3522,
+      "accuracy": 55
+    },
+    "Europe/Madrid": {
+      "city": "Madrid",
+      "country": "ES",
+      "latitude": 40.4168,
+      "longitude": -3.7038,
+      "accuracy": 70
+    },
+    "Europe/Rome": {
+      "city": "Rome",
+      "country": "IT",
+      "latitude": 41.9028,
+      "longitude": 12.4964,
+      "accuracy": 60
+    },
+    "Europe/Amsterdam": {
+      "city": "Amsterdam",
+      "country": "NL",
+      "latitude": 52.3676,
+      "longitude": 4.9041,
+      "accuracy": 55
+    },
+    "Europe/Stockholm": {
+      "city": "Stockholm",
+      "country": "SE",
+      "latitude": 59.3293,
+      "longitude": 18.0686,
+      "accuracy": 60
+    },
+    "Europe/Warsaw": {
+      "city": "Warsaw",
+      "country": "PL",
+      "latitude": 52.2297,
+      "longitude": 21.0122,
+      "accuracy": 60
+    },
+    "Europe/Lisbon": {
+      "city": "Lisbon",
+      "country": "PT",
+      "latitude": 38.7223,
+      "longitude": -9.1393,
+      "accuracy": 60
+    },
+    "Europe/Prague": {
+      "city": "Prague",
+      "country": "CZ",
+      "latitude": 50.0755,
+      "longitude": 14.4378,
+      "accuracy": 60
+    },
+    "Europe/Helsinki": {
+      "city": "Helsinki",
+      "country": "FI",
+      "latitude": 60.1699,
+      "longitude": 24.9384,
+      "accuracy": 60
+    },
+    "America/New_York": {
+      "city": "New York",
+      "country": "US",
+      "latitude": 40.7128,
+      "longitude": -74.006,
+      "accuracy": 80
+    },
+    "America/Chicago": {
+      "city": "Chicago",
+      "country": "US",
+      "latitude": 41.8781,
+      "longitude": -87.6298,
+      "accuracy": 80
+    },
+    "America/Denver": {
+      "city": "Denver",
+      "country": "US",
+      "latitude": 39.7392,
+      "longitude": -104.9903,
+      "accuracy": 80
+    },
+    "America/Los_Angeles": {
+      "city": "Los Angeles",
+      "country": "US",
+      "latitude": 34.0522,
+      "longitude": -118.2437,
+      "accuracy": 80
+    },
+    "America/Toronto": {
+      "city": "Toronto",
+      "country": "CA",
+      "latitude": 43.6532,
+      "longitude": -79.3832,
+      "accuracy": 80
+    },
+    "America/Vancouver": {
+      "city": "Vancouver",
+      "country": "CA",
+      "latitude": 49.2827,
+      "longitude": -123.1207,
+      "accuracy": 80
+    },
+    "America/Sao_Paulo": {
+      "city": "Sao Paulo",
+      "country": "BR",
+      "latitude": -23.5505,
+      "longitude": -46.6333,
+      "accuracy": 90
+    },
+    "America/Mexico_City": {
+      "city": "Mexico City",
+      "country": "MX",
+      "latitude": 19.4326,
+      "longitude": -99.1332,
+      "accuracy": 90
+    },
+    "America/Bogota": {
+      "city": "Bogota",
+      "country": "CO",
+      "latitude": 4.711,
+      "longitude": -74.0721,
+      "accuracy": 90
+    },
+    "Asia/Tokyo": {
+      "city": "Tokyo",
+      "country": "JP",
+      "latitude": 35.6895,
+      "longitude": 139.6917,
+      "accuracy": 70
+    },
+    "Asia/Seoul": {
+      "city": "Seoul",
+      "country": "KR",
+      "latitude": 37.5665,
+      "longitude": 126.978,
+      "accuracy": 70
+    },
+    "Asia/Shanghai": {
+      "city": "Shanghai",
+      "country": "CN",
+      "latitude": 31.2304,
+      "longitude": 121.4737,
+      "accuracy": 80
+    },
+    "Asia/Hong_Kong": {
+      "city": "Hong Kong",
+      "country": "HK",
+      "latitude": 22.3193,
+      "longitude": 114.1694,
+      "accuracy": 70
+    },
+    "Asia/Taipei": {
+      "city": "Taipei",
+      "country": "TW",
+      "latitude": 25.033,
+      "longitude": 121.5654,
+      "accuracy": 70
+    },
+    "Asia/Singapore": {
+      "city": "Singapore",
+      "country": "SG",
+      "latitude": 1.3521,
+      "longitude": 103.8198,
+      "accuracy": 70
+    },
+    "Asia/Kolkata": {
+      "city": "Mumbai",
+      "country": "IN",
+      "latitude": 19.076,
+      "longitude": 72.8777,
+      "accuracy": 90
+    },
+    "Asia/Dubai": {
+      "city": "Dubai",
+      "country": "AE",
+      "latitude": 25.2048,
+      "longitude": 55.2708,
+      "accuracy": 80
+    },
+    "Asia/Jakarta": {
+      "city": "Jakarta",
+      "country": "ID",
+      "latitude": -6.2088,
+      "longitude": 106.8456,
+      "accuracy": 90
+    },
+    "Australia/Sydney": {
+      "city": "Sydney",
+      "country": "AU",
+      "latitude": -33.8688,
+      "longitude": 151.2093,
+      "accuracy": 80
+    },
+    "Pacific/Auckland": {
+      "city": "Auckland",
+      "country": "NZ",
+      "latitude": -36.8485,
+      "longitude": 174.7633,
+      "accuracy": 80
+    },
+    "Africa/Johannesburg": {
+      "city": "Johannesburg",
+      "country": "ZA",
+      "latitude": -26.2041,
+      "longitude": 28.0473,
+      "accuracy": 90
+    },
+    "Africa/Cairo": {
+      "city": "Cairo",
+      "country": "EG",
+      "latitude": 30.0444,
+      "longitude": 31.2357,
+      "accuracy": 90
+    },
+    "Africa/Lagos": {
+      "city": "Lagos",
+      "country": "NG",
+      "latitude": 6.5244,
+      "longitude": 3.3792,
+      "accuracy": 90
+    },
+    "UTC": {
+      "city": "Reykjavik",
+      "country": "IS",
+      "latitude": 64.1466,
+      "longitude": -21.9426,
+      "accuracy": 120
+    }
+  }
+}

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>fp-spoof</title>
+<link rel="stylesheet" href="popup.css">
+</head>
+<body>
+<header>
+<h1>fp-spoof</h1>
+<label class="switch" title="Enable spoofing">
+<input type="checkbox" id="enabled">
+<span></span>
+</label>
+</header>
+<main>
+<div class="row">
+<label class="field grow">
+<span>Device</span>
+<select id="personas"></select>
+</label>
+<button id="reroll" type="button" title="Reroll, keeping pinned fields">Reroll</button>
+<button id="reshuffle" type="button" title="Roll a whole new identity, ignoring pins">New</button>
+</div>
+<div id="locks" class="locks" role="group" aria-label="Pinned fields" aria-live="polite"></div>
+<div id="verdict" class="verdict" aria-live="polite"></div>
+<section class="now">
+<h2>Now reporting</h2>
+<div id="summary" class="summary"></div>
+</section>
+<div class="ip">
+<span>IP</span>
+<b id="ip-note">not spoofable &mdash; needs a proxy or VPN</b>
+<button id="network-link" type="button" title="Open the Network card">Set&hellip;</button>
+</div>
+<details id="quick" class="quick">
+<summary>Location &amp; network</summary>
+<div class="quick-body">
+<label class="quick-field">
+<span>City</span>
+<select id="quick-city"></select>
+</label>
+<label class="quick-field">
+<span>Route</span>
+<select id="quick-route">
+<option value="system">System / VPN &mdash; OS route</option>
+<option value="direct">Direct &mdash; ignore system proxy</option>
+<option value="fixed_servers">Proxy server</option>
+</select>
+</label>
+<div id="quick-proxy" class="proxy-grid" hidden>
+<label class="quick-field">
+<span>Host</span>
+<input id="quick-host" type="text" spellcheck="false" autocomplete="off" placeholder="127.0.0.1">
+</label>
+<label class="quick-field">
+<span>Port</span>
+<input id="quick-port" type="number" min="1" max="65535" step="1" placeholder="8080">
+</label>
+</div>
+<div class="quick-actions">
+<p id="quick-note" class="quick-note"></p>
+<button id="quick-save" type="button">Save</button>
+</div>
+<div class="shuffle-row" role="group" aria-label="Shuffle one axis">
+<button type="button" data-shuffle="screen">Screen</button>
+<button type="button" data-shuffle="hardware">CPU</button>
+<button type="button" data-shuffle="gpu">GPU</button>
+<button type="button" data-shuffle="noise">Noise</button>
+</div>
+</div>
+</details>
+<div class="actions">
+<button id="apply" type="button">Apply to this tab</button>
+<button id="advanced" type="button">Advanced &rsaquo;</button>
+</div>
+<p id="status" class="status" role="status"></p>
+<p class="hint">Edits apply on the next page load; headers are immediate.</p>
+</main>
+</body>
+<script type="module" src="popup.js"></script>
+</html>

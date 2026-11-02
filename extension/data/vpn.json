@@ -1,0 +1,47 @@
+{
+  "active": true,
+  "connected": [],
+  "interfaces": [
+    "utun0",
+    "utun1",
+    "utun2",
+    "utun3"
+  ],
+  "tunnels": [
+    {
+      "detail": "",
+      "id": "mullvad",
+      "installed": false,
+      "label": "Mullvad",
+      "state": "not installed"
+    },
+    {
+      "detail": "",
+      "id": "nordvpn",
+      "installed": false,
+      "label": "NordVPN",
+      "state": "not installed"
+    },
+    {
+      "detail": "",
+      "id": "protonvpn",
+      "installed": false,
+      "label": "Proton VPN",
+      "state": "not installed"
+    },
+    {
+      "detail": "",
+      "id": "tailscale",
+      "installed": false,
+      "label": "Tailscale",
+      "state": "not installed"
+    },
+    {
+      "detail": "",
+      "id": "wg",
+      "installed": false,
+      "label": "WireGuard",
+      "state": "not installed"
+    }
+  ]
+}
