@@ -297,11 +297,14 @@ assert(ipSummary({ ...base, proxy: accepted.proxy }).includes('socks5://127.0.0.
 // The quick panel has no scheme field: editing the same endpoint keeps its
 // scheme and credentials, but a new endpoint must not inherit either.
 const withAuth = { ...accepted.proxy, username: 'alice', password: 's3cret' };
-const sameTarget = quickProxy(withAuth, '127.0.0.1', 1080);
-assert(sameTarget.proxy.scheme === 'socks5', 'the same proxy must keep its scheme');
-assert(sameTarget.proxy.username === 'alice', 'the same proxy must keep its credentials');
-const moved = quickProxy(withAuth, '10.0.0.5', 8080);
-assert(moved.proxy.scheme === 'http', 'a new proxy target must not inherit socks5');
+const sameHttp = quickProxy(withAuth, '127.0.0.1', 1080, 'http');
+assert(sameHttp.proxy.scheme === 'http', 'the chosen scheme must be saved');
+assert(sameHttp.proxy.username === 'alice', 'HTTP on the same endpoint keeps its credentials');
+const sameSocks = quickProxy(withAuth, '127.0.0.1', 1080, 'socks5');
+assert(sameSocks.proxy.scheme === 'socks5', 'a SOCKS5 choice must be saved');
+assert(sameSocks.proxy.username === undefined, 'SOCKS5 must not carry credentials Chrome cannot send');
+const moved = quickProxy(withAuth, '10.0.0.5', 8080, 'socks5');
+assert(moved.proxy.scheme === 'socks5', 'a new SOCKS5 target must keep the chosen scheme');
 assert(moved.proxy.username === undefined, 'a new proxy target must not receive old credentials');
 assert(ipSummary(base) === IP_NOTE, 'without a proxy the limit stays honest');
 assert(derived(base).orientation.type === 'landscape-primary', 'orientation follows the screen');

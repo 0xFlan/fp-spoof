@@ -302,7 +302,7 @@ font-size: 12px;
 }
 .quick-field input:hover,
 .quick-field select:hover { background: var(--surface-hover); }
-.proxy-grid { display: grid; grid-template-columns: minmax(0, 1fr) 78px; gap: 8px; }
+.proxy-grid { display: grid; grid-template-columns: 84px minmax(0, 1fr) 78px; gap: 8px; }
 .quick-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .quick-note {
 margin: 0;

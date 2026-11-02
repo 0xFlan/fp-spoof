@@ -145,10 +145,11 @@ The **Location & network** panel also sets the route:
 
 - **System / VPN** follows the operating system route.
 - **Direct** ignores the system proxy.
-- **Proxy server** uses the proxy host and port you enter. If you edit the same
-  proxy address, its stored scheme and credentials stay. If you enter a new
-  address, the panel uses `http` and does not send the old credentials to the
-  new host.
+- **Proxy server** uses the scheme, host, and port you enter. Choose `http`,
+  `https`, `socks4`, or `socks5`. If the address stays the same, its bypass list
+  and HTTP credentials stay. A new address does not inherit the old credentials.
+  Chrome cannot authenticate to a SOCKS proxy, so choosing `socks4` or `socks5`
+  drops the username and password. The option says *no auth*.
 
 Below the route controls are four shuffle buttons: **Screen**, **CPU**, **GPU**,
 and **Noise**. Each one changes only its own group. A pinned group refuses to
@@ -216,10 +217,10 @@ one.
 
 ### 5.7 What the System / VPN route means
 
-The **System / VPN** route belongs to the operating system. The extension and
-the launcher cannot start, stop, or check a VPN tunnel. Choosing **System / VPN**
-only stops the extension from overriding the route. Whatever the operating
-system and any VPN client do then applies.
+The **System / VPN** route is OS-owned. It belongs to the operating system. The
+extension and the launcher cannot start, stop, or check a VPN tunnel. Choosing
+**System / VPN** only stops the extension from overriding the route. Whatever
+the operating system and any VPN client do then applies.
 
 The popup says *follows your OS route*. It does not claim that it changed a
 tunnel.
@@ -228,7 +229,8 @@ tunnel.
 
 - the launcher passes `--proxy-server` for a proxy;
 - the launcher passes `--no-proxy-server` for direct;
-- the end-to-end test observes Chrome using each route.
+- the end-to-end test observes Chrome using each route, including SOCKS5 against
+  a local SOCKS5 listener.
 
 ### 5.8 How edits are stored
 
@@ -320,14 +322,15 @@ There were no skips.
 | Headless, extension mounted | `fps verify --extension` | **30/30** |
 | Generator across the matrix | `fps gen --all` / `fps validate` | **8/8 valid** |
 | Proxy egress, local listener | `pytest tests/test_egress.py` | **2 passed** |
+| SOCKS5 egress, local listener | `pytest tests/test_socks.py` | **2 passed** |
 | Tunnel detection and egress | `pytest tests/test_vpn_egress.py` | **8 passed** |
 | Chrome / Windows persona | `fps verify --browser chrome --platform windows` | **31/31** |
 | Edge / Linux persona | `fps verify --browser edge --platform linux` | **31/31** |
 | Extension, chrome-windows-0000 | `fps verify --extension --name chrome-windows-0000` | **30/30** |
 | Extension, edge-linux-0000 | `fps verify --extension --name edge-linux-0000` | **30/30** |
 | Live export, import, re-export | `python tools/live_roundtrip.py` | **0 field differences** |
-| Popup to launcher, all routes | `python tools/gui_roundtrip.py` | **31/31**, proxy and direct routes observed |
-| Full suite, clean store | `pytest -q` | **148 passed**, no skips |
+| Popup to launcher, all routes | `python tools/gui_roundtrip.py` | **31/31**, HTTP proxy, SOCKS5, and direct routes observed |
+| Full suite, clean store | `pytest -q` | **150 passed**, no skips |
 | Headful, launcher | `fps verify --headful` | **31/31** |
 | Safari / macOS and iOS | `fps verify --browser safari --platform mac` / `ios` | **29/29** each |
 
@@ -363,8 +366,15 @@ The same run proved the routes with local listeners:
   `GET http://gui.fpspoof.test:PORT/` in absolute form, with the persona's
   `User-Agent`. The page came back from the proxy.
 - **Direct**: the origin server received the request. The proxy received none.
+- **SOCKS5**: Chrome completed a real SOCKS5 CONNECT through a local listener.
+  The listener saw the requested host and port. The origin received the
+  persona's `User-Agent`, and the page came back through the tunnel.
 - **System / VPN**: the launcher added no routing flag. The popup said
   *follows your OS route*. The README states the same limit.
+
+The popup also saved the SOCKS5 choice, switched away to direct, and restored
+SOCKS5. The restored route had the chosen scheme, the same host and port, and no
+username or password.
 
 ### 8.4 The extension run also proves `document_start`
 
@@ -403,7 +413,7 @@ test a third-party fingerprinting service. It does not test TLS or JA3.
 | `fps verify` | Run the live browser checks. |
 | `fps geo [ZONE]` | Show the city and coordinates for a timezone. |
 | `fps geo --lat L --lon N` | Find the nearest catalog city. |
-| `fps proxy NAME --url URL` | Attach a proxy, for example `socks5://user:pass@host:1080`. |
+| `fps proxy NAME --url URL` | Attach a proxy, for example `http://user:pass@host:8080` or `socks5://host:1080`. |
 | `fps proxy NAME --system` | Follow the operating system route. |
 | `fps proxy NAME --direct` | Ignore the system proxy. |
 | `fps proxy NAME --host H --port P` | Set the proxy field by field. |
@@ -459,8 +469,11 @@ The tool cannot invent an IP address. It can send traffic through a proxy you
 control.
 
 ```bash
-# Use the URL your provider sent, including credentials.
-fps proxy chrome-windows-0000 --url 'socks5://user:pass@proxy.example:1080'
+# An HTTP proxy can take credentials.
+fps proxy chrome-windows-0000 --url 'http://user:pass@proxy.example:8080'
+
+# A SOCKS5 proxy uses no credentials; Chrome cannot send them.
+fps proxy chrome-windows-0000 --url 'socks5://proxy.example:1080'
 
 # Or set the fields one by one.
 fps proxy chrome-windows-0000 --scheme http --host 127.0.0.1 --port 8080
@@ -472,19 +485,21 @@ fps proxy chrome-windows-0000 --clear    # remove our proxy
 ```
 
 The editor offers the same three routes and a **Provider URL** field. Paste
-`scheme://user:pass@host:1080`, and it fills the fields, including credentials.
+`scheme://user:pass@host:1080`, and it fills the fields. The popup's short form
+also has a scheme selector: `http`, `https`, `socks4`, or `socks5`.
 
 In the extension, a proxy uses `chrome.proxy.settings` in `fixed_servers` mode.
 It also sets `webRTCIPHandlingPolicy` to `disable_non_proxied_udp`, so UDP
-cannot carry the real address around the proxy. Credentials are answered only
-for proxy challenges (`isProxy`). A site's own `401` response never receives
-them.
+cannot carry the real address around the proxy. For HTTP and HTTPS proxies,
+credentials are answered only for proxy challenges (`isProxy`). A site's own
+`401` response never receives them. Chrome's proxy stack cannot authenticate to
+SOCKS, so the SOCKS options carry no credentials.
 
 The launcher applies the same route and accepts the same URL forms:
 
 ```bash
-fps launch chrome-windows-0000                              # persona's proxy
-fps launch --proxy 'socks5://user:pass@proxy.example:1080'  # one-off override
+fps launch chrome-windows-0000                         # persona's proxy
+fps launch --proxy 'socks5://proxy.example:1080'       # one-off override
 ```
 
 Proxy passwords are stored in the extension profile in plain text. Use a
@@ -545,8 +560,18 @@ without a proxy.
   WebRTC policy from the extension's service worker. It also proves the
   negative case: a persona with no proxy never contacts the listener and leaves
   the policy at `default`.
-- **What the egress tests do not cover:** a real third-party proxy, SOCKS or UDP
-  payloads, a headful run of that test, and anything below HTTP.
+- **What the SOCKS5 tests prove:** `tests/test_socks.py` starts a local,
+  dependency-free SOCKS5 listener. It drives both the launcher flag and the
+  extension's `chrome.proxy` path. The listener records the CONNECT target, the
+  origin receives the persona's `User-Agent`, and the page comes back through
+  the tunnel. No third-party proxy and no credentials are involved.
+- **What the egress tests do not cover:** a real third-party proxy, a
+  third-party SOCKS proxy, UDP payloads, a headful run of those tests, and
+  anything below HTTP.
+- **Chrome cannot authenticate to a SOCKS proxy.** It can route through SOCKS4
+  and SOCKS5, but the proxy API has no SOCKS credential field. Use an
+  IP-allowlisted SOCKS proxy, or use an authenticated HTTP or HTTPS proxy. The
+  popup drops SOCKS credentials instead of pretending to send them.
 - **A VPN is not configured or verified.** `system` mode only stops this project
   from overriding the operating system route. Whether a tunnel is up is between
   you and the operating system. The IP row never claims otherwise.
@@ -575,9 +600,9 @@ rows to a throwaway database:
 
 ```
 rows                     300
-old (conn+schema/row)    94.8 ms  -> 3164 rows/s
-new (WAL + upsert)       13.8 ms  -> 21758 rows/s
-speedup                  6.9x
+old (conn+schema/row)    82.3 ms  -> 3645 rows/s
+new (WAL + upsert)       10.4 ms  -> 28735 rows/s
+speedup                  7.9x
 rows after a second run  300 (names deduped, not duplicated)
 journal_mode             wal
 ```
@@ -588,8 +613,8 @@ number. Run `python tools/bench_store.py` to reproduce these results.
 Package size, measured with `python tools/bench_package.py`:
 
 ```
-extension                131.1 KB raw   38.8 KB gzip   18 files
-repository total         432.1 KB raw   139.6 KB gzip  72 files
+extension                131.7 KB raw   39.0 KB gzip   18 files
+repository total         448.0 KB raw   144.0 KB gzip  74 files
 persona mirror           10.6 KB (2% of the total), 8 personas
 ```
 
@@ -662,11 +687,11 @@ The suite covers:
 - extension assets, including `node --check` on every script;
 - a Node harness for `schema.js`;
 - a fake `chrome` harness for the proxy and WebRTC logic;
-- a live popup-to-launcher run;
-- observed proxy egress.
+- a live popup-to-launcher run, including a SOCKS5 route;
+- observed HTTP proxy and SOCKS5 egress.
 
-`tests/test_egress.py` is the only test that observes a browser's network
-egress. It watches real Chrome reach a local proxy and reads the applied policy
+`tests/test_egress.py` and `tests/test_socks.py` observe a browser's network
+egress. They watch real Chrome reach local listeners and read the applied policy
 back from the service worker.
 
 `tests/test_vpn_egress.py` needs no browser and no network. It feeds each

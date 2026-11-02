@@ -7,10 +7,12 @@ the UI and worker use), handed to the launcher exactly as ``fps launch`` would,
 and the live browser is compared against both the resolved persona and the
 strings the popup actually rendered.
 
-Routing is proved with two local listeners:
+Routing is proved with local listeners:
 
 * proxy mode — Chrome must send an absolute-form request to the proxy listener,
   including the persona's User-Agent;
+* SOCKS5 mode — Chrome must complete a SOCKS5 CONNECT through a local SOCKS5
+  listener, and the origin must receive the persona's User-Agent;
 * direct mode — the origin listener must see the request and the proxy must see
   nothing.
 
@@ -31,6 +33,10 @@ from pathlib import Path
 
 from fpr.fingerprint import gen
 from launcher.launch import PROBE_JS, chrome_path, launch, proxy_args, verify_persona
+try:
+    from tools.socks5_listener import Socks5Listener
+except ModuleNotFoundError:  # run directly as tools/gui_roundtrip.py
+    from socks5_listener import Socks5Listener
 
 ROOT = Path(__file__).resolve().parent.parent
 EXTENSION = ROOT / "extension"
@@ -117,18 +123,19 @@ class Popup:
     def eval(self, expression):
         return self.session.cdp.evaluate(expression, session_id=self.sid, await_promise=True)
 
-    def choose(self, route: str, port: int | None = None) -> None:
+    def choose(self, route: str, port: int | None = None, scheme: str = "http") -> None:
         script = """(() => {
           const city = document.querySelector('#quick-city');
           city.value = 'Asia/Tokyo';
           const route = document.querySelector('#quick-route');
           route.value = %s;
           route.dispatchEvent(new Event('change', { bubbles: true }));
+          document.querySelector('#quick-scheme').value = %s;
           document.querySelector('#quick-host').value = '127.0.0.1';
           document.querySelector('#quick-port').value = %s;
           document.querySelector('#quick-save').click();
           return true;
-        })()""" % (json.dumps(route), json.dumps(str(port or "")))
+        })()""" % (json.dumps(route), json.dumps(scheme), json.dumps(str(port or "")))
         self.eval(script)
 
     def ip_text(self) -> str:
@@ -206,6 +213,7 @@ def main() -> int:
 
     proxy = Listener().__enter__()
     origin = Listener().__enter__()
+    socks = Socks5Listener(("127.0.0.1", origin.port)).__enter__()
     author = None
     sessions = []
     ok = True
@@ -221,29 +229,41 @@ def main() -> int:
             "document.querySelector('#quick-city').options.length"))
 
         captures = {}
-        for route, port, needle in (
-            ("fixed_servers", proxy.port, "via http://127.0.0.1:%d" % proxy.port),
-            ("direct", None, "direct \u00b7"),
-            ("system", None, "system / vpn"),
-        ):
-            popup.choose(route, port)
+
+        def settle(route, port, needle, scheme):
+            popup.choose(route, port, scheme)
             capture = None
 
-            def saved(route=route, needle=needle):
+            def saved():
                 nonlocal capture
                 candidate = popup.capture()
-                mode = (candidate["persona"].get("proxy") or {}).get("mode")
-                if mode == route and needle in candidate["ip"].lower():
+                proxy_value = candidate["persona"].get("proxy") or {}
+                matches = proxy_value.get("mode") == route
+                if route == "fixed_servers":
+                    matches = matches and proxy_value.get("scheme") == scheme
+                matches = matches and needle in candidate["ip"].lower()
+                if matches:
                     capture = candidate
-                    return True
-                return False
+                return matches
 
-            if not wait_until(saved, 15):
-                print("FAIL: popup never settled on the %s route: %r" % (route, popup.ip_text()))
+            return capture if wait_until(saved, 15) else None
+
+        routes = (
+            ("http", "fixed_servers", proxy.port,
+             "via http://127.0.0.1:%d" % proxy.port, "http"),
+            ("socks5", "fixed_servers", socks.port,
+             "via socks5://127.0.0.1:%d" % socks.port, "socks5"),
+            ("direct", "direct", None, "direct \u00b7", "http"),
+            ("system", "system", None, "system / vpn", "http"),
+        )
+        for key, route, port, needle, scheme in routes:
+            capture = settle(route, port, needle, scheme)
+            if capture is None:
+                print("FAIL: popup never settled on %s: %r" % (key, popup.ip_text()))
                 return 1
-            mode = (capture["persona"].get("proxy") or {}).get("mode")
-            if mode != route:
-                print("FAIL: popup saved mode %r for route %r" % (mode, route))
+            saved_proxy = capture["persona"].get("proxy") or {}
+            if key == "socks5" and saved_proxy.get("username") is not None:
+                print("FAIL: SOCKS5 saved credentials Chrome cannot send")
                 return 1
             problems = displayed_rows_match(capture)
             if problems:
@@ -251,18 +271,20 @@ def main() -> int:
                 for problem in problems:
                     print("  -", problem)
                 return 1
-            captures[route] = capture
-            print("\n[%s] popup IP row: %s" % (route, capture["ip"]))
-            print("[%s] popup displayed: %s" % (route, json.dumps(capture["rows"], ensure_ascii=False)))
-            print("[%s] saved persona: tz=%s language=%s geo=%s,%s screen=%sx%s@%s" % (
-                route, capture["persona"].get("timezone"),
+            captures[key] = capture
+            print("\n[%s] popup IP row: %s" % (key, capture["ip"]))
+            print("[%s] popup displayed: %s" % (key, json.dumps(capture["rows"], ensure_ascii=False)))
+            print("[%s] saved persona: tz=%s language=%s geo=%s,%s screen=%sx%s@%s scheme=%s" % (
+                key, capture["persona"].get("timezone"),
                 (capture["persona"].get("languagesZ") or [None])[0],
                 round(capture["persona"]["geo"]["latitude"], 4),
                 round(capture["persona"]["geo"]["longitude"], 4),
                 capture["persona"]["screenX"], capture["persona"]["screenY"],
-                capture["persona"]["pixelRatio"]))
+                capture["persona"]["pixelRatio"],
+                (capture["persona"].get("proxy") or {}).get("scheme")))
 
-        proxy_capture = captures["fixed_servers"]
+        proxy_capture = captures["http"]
+        socks_capture = captures["socks5"]
         direct_capture = captures["direct"]
         system_capture = captures["system"]
         persona = proxy_capture["persona"]
@@ -339,6 +361,46 @@ def main() -> int:
               "(origin requests: %d, proxy requests: %d)" % (
                   len(origin.requests), len(proxy.requests[before:])))
 
+        # SOCKS5 route: a real local listener, the origin, and the persona UA.
+        before_socks = len(socks.connections)
+        before_origin = len(origin.requests)
+        socks_persona = socks_capture["persona"]
+        session = launch(socks_persona,
+                         url="http://socks.fpspoof.test:%d/" % origin.port,
+                         headless=True, chrome=binary,
+                         proxy=socks_persona.get("proxy"))
+        sessions.append(session)
+        socks_served = session.evaluate("window.__PROXY_SERVED__ || null")
+        via_socks = session.evaluate(PROBE_JS)
+        socks_seen = socks.connections[before_socks:]
+        origin_seen = origin.requests[before_origin:]
+        socks_ok = socks_served == "yes" and bool(socks_seen)
+        socks_ok = socks_ok and any(
+            entry["host"] == "socks.fpspoof.test" and entry["port"] == origin.port
+            for entry in socks_seen)
+        socks_ok = socks_ok and any(
+            entry["ua"] == socks_persona["ua"] for entry in origin_seen)
+        socks_ok = socks_ok and via_socks.get("ua") == socks_persona["ua"]
+        ok = ok and socks_ok
+        print("\nSOCKS5 route honoured:", socks_ok,
+              "(handshakes: %d, origin requests: %d)" % (len(socks_seen), len(origin_seen)))
+        for entry in socks_seen:
+            print("  SOCKS5 CONNECT %s:%s" % (entry["host"], entry["port"]))
+
+        # Restore the SOCKS5 choice after leaving it: no stale scheme or credentials.
+        popup.choose("direct")
+        left = wait_until(lambda: "direct \u00b7" in popup.ip_text().lower(), 10)
+        restored = settle("fixed_servers", socks.port,
+                          "via socks5://127.0.0.1:%d" % socks.port, "socks5")
+        restored_proxy = (restored or {}).get("persona", {}).get("proxy") or {}
+        restore_ok = bool(left) and bool(restored)
+        restore_ok = restore_ok and restored_proxy.get("scheme") == "socks5"
+        restore_ok = restore_ok and str(restored_proxy.get("host")) == "127.0.0.1"
+        restore_ok = restore_ok and int(restored_proxy.get("port") or 0) == socks.port
+        restore_ok = restore_ok and restored_proxy.get("username") is None
+        ok = ok and restore_ok
+        print("SOCKS5 selection restored without stale credentials:", restore_ok)
+
         # System/VPN is OS-owned: assert the product states that, and that the
         # launcher adds no routing flag of its own.
         system_note = system_capture["ip"].lower()
@@ -360,6 +422,7 @@ def main() -> int:
             author.close()
         proxy.__exit__()
         origin.__exit__()
+        socks.__exit__()
 
 
 if __name__ == "__main__":

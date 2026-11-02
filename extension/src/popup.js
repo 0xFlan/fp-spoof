@@ -116,6 +116,7 @@ const proxy = persona && persona.proxy;
 const mode = proxy ? String(proxy.mode || 'fixed_servers') : 'system';
 el('quick-route').value = mode;
 el('quick-proxy').hidden = mode !== 'fixed_servers';
+el('quick-scheme').value = proxy && proxy.scheme ? proxy.scheme : 'http';
 el('quick-host').value = proxy && proxy.host ? proxy.host : '';
 el('quick-port').value = proxy && proxy.port ? proxy.port : '';
 quickNote.textContent = persona ? ipSummary(persona) : '';
@@ -258,7 +259,7 @@ next.geo = { ...cities[zone] };
 const mode = el('quick-route').value;
 let result;
 if (mode === 'fixed_servers') {
-result = quickProxy(persona.proxy, el('quick-host').value.trim(), Number(el('quick-port').value));
+result = quickProxy(persona.proxy, el('quick-host').value.trim(), Number(el('quick-port').value), el('quick-scheme').value);
 } else {
 result = { proxy: { mode }, error: null };
 }

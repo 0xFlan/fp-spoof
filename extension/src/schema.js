@@ -118,18 +118,21 @@ proxy.password = String(input.password == null ? '' : input.password);
 }
 return { proxy, error: null };
 }
-export function quickProxy(previous, host, port) {
+export function quickProxy(previous, host, port, scheme) {
+const chosen = scheme || 'http';
 const same = !!previous && String(previous.host || '') === String(host) &&
 Number(previous.port) === Number(port);
 const input = {
 mode: 'fixed_servers',
-scheme: same && previous.scheme ? previous.scheme : 'http',
+scheme: chosen,
 host,
 port
 };
 if (same) {
 if (Array.isArray(previous.bypass) && previous.bypass.length) input.bypass = previous.bypass;
-if (previous.username != null) {
+// Chrome cannot authenticate to a SOCKS proxy, so those credentials are
+// dropped even when the endpoint has not changed.
+if ((chosen === 'http' || chosen === 'https') && previous.username != null) {
 input.username = previous.username;
 input.password = previous.password;
 }
