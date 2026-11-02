@@ -600,21 +600,21 @@ rows to a throwaway database:
 
 ```
 rows                     300
-old (conn+schema/row)    82.3 ms  -> 3645 rows/s
-new (WAL + upsert)       10.4 ms  -> 28735 rows/s
-speedup                  7.9x
+old (conn+schema/row)    127.2 ms -> 2358 rows/s
+new (WAL + upsert)       12.9 ms  -> 23292 rows/s
+speedup                  9.9x
 rows after a second run  300 (names deduped, not duplicated)
 journal_mode             wal
 ```
 
-Timings vary by a few percent between runs. The speedup ratio is the stable
-number. Run `python tools/bench_store.py` to reproduce these results.
+Timings and the ratio move with machine load. Treat this block as one measured
+run, not a fixed benchmark. Run `python tools/bench_store.py` to measure again.
 
 Package size, measured with `python tools/bench_package.py`:
 
 ```
 extension                131.7 KB raw   39.0 KB gzip   18 files
-repository total         448.0 KB raw   144.0 KB gzip  74 files
+repository total         449.9 KB raw   144.4 KB gzip  74 files
 persona mirror           10.6 KB (2% of the total), 8 personas
 ```
 
