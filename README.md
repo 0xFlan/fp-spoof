@@ -1,8 +1,7 @@
 # fp-spoof
 
-fp-spoof makes one browser look like many different devices. It creates
-"personas": sets of values that a real device reports to websites. It stores the
-personas in a local database. It can apply a persona in two ways:
+fp-spoof is a toolkit for masking and randomizing browser, device, and network fingerprints (Canvas, WebGL, TLS, User-Agent) to bypass tracking and anti-bot checks.
+ It can apply a persona in two ways:
 
 - with a Chrome or Edge extension, while you browse normally;
 - with a launcher that starts a clean browser and applies the persona through
