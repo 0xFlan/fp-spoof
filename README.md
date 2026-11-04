@@ -7,11 +7,6 @@ fp-spoof is a toolkit for masking and randomizing browser, device, and network f
 - with a launcher that starts a clean browser and applies the persona through
   the DevTools Protocol.
 
-The tool runs offline. It makes no network calls, needs no account, and sends no
-telemetry.
-
-This README follows the plain-language principles of ISO 24495-1: make the
-information relevant, findable, understandable, and usable.
 
 ## Contents
 
